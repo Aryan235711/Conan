@@ -1,5 +1,5 @@
 
-# 🕵️ Detective Conan Reasoning Engine
+# Detective Conan Reasoning Engine
 
 ![MIT License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
@@ -18,7 +18,7 @@ A research-grade reasoning evaluation engine for detective-style logic and AI ta
 
 
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```
 ├── .gitignore
@@ -73,7 +73,7 @@ A research-grade reasoning evaluation engine for detective-style logic and AI ta
 
 
 
-## 🚀 Quick Start
+## Quick Start
 
 
 ### 1. Run the Engine
@@ -94,7 +94,7 @@ python3 -m unittest discover tests
 
 
 
-## 📚 Documentation
+## Documentation
 
 - **README.md** (this file) - Project overview
 - **CONTRIBUTING.md** - Contribution guidelines
@@ -109,7 +109,7 @@ python3 -m unittest discover tests
 ---
 
 
-## 🎭 Templates (Public)
+## Templates (Public)
 
 This repository includes only the template framework and documentation. No actual case data, generated cases, or training data are included.
 
@@ -118,14 +118,14 @@ See `docs/TEMPLATE_GUIDE.md` for template structure and usage.
 ---
 
 
-## 🤝 Contributing
+## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
 ---
 
 
-## 📞 Support
+## Support
 
 For help, see the `docs/` folder or open a GitHub issue.
 
