@@ -76,244 +76,41 @@ See `docs/TRAINING_PLAN.md` for complete neural network training guide.
 
 ---
 
+
 ## 📚 Documentation
 
-### Getting Started
 - **README.md** (this file) - Project overview
 - **docs/PROJECT_COMPLETE.md** - Completion summary
 - **docs/README_GENERATION.md** - Quick generation guide
-
-### Case Generation
 - **docs/GENERATION_PLAN.md** - Generation strategy
 - **docs/TEMPLATE_GUIDE.md** - Template usage
 - **docs/QUALITY_COMPARISON.md** - Quality analysis
-
-### Neural Network Training
-- **docs/TRAINING_PLAN.md** - Complete training guide
+- **docs/TRAINING_PLAN.md** - Training guide (for reference only)
 - **docs/METADATA_ANALYSIS.md** - Evidence metadata analysis
 
 ---
 
-## 🎯 Use Cases
+## 🎭 Templates (Public)
 
-### 1. Interactive Case Testing
-```bash
-python3 main.py
-# Enter case ID: C100
-```
+The public repository includes only the template framework and documentation. No actual case data, generated cases, or training data are included.
 
-### 2. Batch Case Generation
-```bash
-cd scripts/generators
-python3 batch_generator.py --count 50 --template ice_weapon
-```
-
-### 3. Training Data Extraction
-```bash
-cd scripts/generators
-python3 extract_training_data.py
-# Output: training_data/ folder with train/val/test splits
-```
-
-### 4. Neural Network Training
-```python
-# See docs/TRAINING_PLAN.md for complete code
-from transformers import AutoModelForCausalLM
-import json
-
-# Load training data
-with open("training_data/train.json") as f:
-    train_data = json.load(f)
-
-# Fine-tune model (LoRA)
-# ... (see training plan)
-```
-
----
-
-## 📊 Dataset Statistics
-
-### Cases
-- **Total**: 500 cases (C001-C500)
-- **Original**: 6 hand-crafted cases
-- **Generated**: 494 template-based cases
-- **Templates**: 15 Detective Conan tricks
-
-### Training Data
-- **Total examples**: 1,500
-- **Train**: 1,200 (80%)
-- **Validation**: 150 (10%)
-- **Test**: 150 (10%)
-
-### Categories
-- Physics deception: 300 examples
-- Chemistry deception: 291 examples
-- Staging deception: 195 examples
-- Mechanical deception: 102 examples
-- Other: 612 examples
-
----
-
-## 🎭 Available Templates
-
-### Physical Deception (templates_part1.py)
-1. **Tape Locked Room** - Door taped from inside trick
-2. **Ice Weapon** - Melting ice dagger
-3. **Fishing Line** - Remote trigger mechanism
-4. **Poison Ice Cubes** - Delayed poison delivery
-5. **Mirror Reflection** - Optical illusion alibi
-
-### Audio/Visual & Timing (templates_part2.py)
-6. **Voice Recording** - Pre-recorded audio
-7. **Elevator Timing** - Stopped elevator trick
-8. **Blood Transfer** - False crime scene
-9. **Double Identity** - Twin/disguise
-10. **Staged Suicide** - Murder as suicide
-
-### Environmental & Psychological (templates_part3.py)
-11. **Air Pressure Door** - Temporary lock
-12. **Poison Contact Lens** - Dissolving delivery
-13. **Reverse Locked Room** - Body moved in
-14. **Heat-Activated Poison** - Temperature trigger
-15. **Psychological Trigger** - Manipulation
-
----
-
-## 🔧 Development
-
-### Generate New Template
-```python
-# Edit templates/templates_part1.py
-TEMPLATES_PART1["new_trick"] = {
-    "name": "New Trick Name",
-    "description": "One-line description",
-    "category": "category-name",
-    "insight": {...},
-    "evidence_template": [...],
-    "hidden_truth": "...",
-    "false_narrative": "...",
-    "keywords": {...}
-}
-```
-
-### Validate Cases
-```bash
-python3 main.py --validate
-```
-
-### Run Tests
-```bash
-cd tests
-python3 test_perception.py
-python3 test_causality.py
-```
-
----
-
-## 📈 Training Recommendations
-
-### Recommended Models
-1. **Llama 3.1 8B** - Best reasoning capabilities
-2. **Qwen2.5 7B** - Strong logic and reasoning
-3. **Mistral 7B** - Balanced performance
-
-### Training Method
-- **LoRA fine-tuning** (recommended)
-- Training time: 2-4 hours on cloud GPU
-- Expected accuracy: 70-90%
-
-### Hardware
-- **Cloud GPU**: Google Colab Pro ($10/month), RunPod ($0.50/hour)
-- **Local GPU**: RTX 4080/4090 (16-24GB VRAM)
-
-See `docs/TRAINING_PLAN.md` for complete guide.
-
----
-
-## 🎓 Research Applications
-
-### Reasoning Evaluation
-- Test LLM reasoning capabilities
-- Benchmark deception detection
-- Evaluate evidence weighting
-
-### Training Applications
-- Fine-tune reasoning models
-- Train evidence ranking systems
-- Develop bias detection models
-
-### Research Areas
-- Causal reasoning
-- Perception integrity
-- Cognitive bias detection
-- Structured reasoning evaluation
-
----
-
-## 📝 Citation
-
-If you use this dataset in your research, please cite:
-
-```bibtex
-@dataset{conan_reasoning_2024,
-  title={Detective Conan Reasoning Engine: 500 Cases for Structured Reasoning Evaluation},
-  author={Your Name},
-  year={2024},
-  description={500 detective cases with 15 deception patterns for neural network training}
-}
-```
+See `docs/TEMPLATE_GUIDE.md` for template structure and usage.
 
 ---
 
 ## 🤝 Contributing
 
-### Add New Templates
-1. Create template in `templates/templates_part*.py`
-2. Test with `scripts/generators/conan_template_generator.py`
-3. Generate batch with `scripts/generators/batch_generator.py`
-
-### Improve Quality
-1. Add evidence_meta to cases (see `docs/METADATA_ANALYSIS.md`)
-2. Enhance detective questions
-3. Add more contradiction types
+See `CONTRIBUTING.md` for contribution guidelines.
 
 ---
 
 ## 📞 Support
 
-### Documentation
-- `docs/` folder contains all guides
-- `docs/TRAINING_PLAN.md` for training help
-- `docs/TEMPLATE_GUIDE.md` for generation help
-
-### Issues
-- Check validation: `python3 main.py --validate`
-- Review statistics: `training_data/statistics.txt`
-- Test interactively: `python3 main.py`
+For help, see the `docs/` folder or open a GitHub issue.
 
 ---
 
-## ✅ Project Milestones
-
-- [x] Core reasoning engine implemented
-- [x] 15 Detective Conan templates created
-- [x] 500 cases generated
-- [x] Training data extracted (1,500 examples)
-- [x] Quality validation (100% pass rate)
-- [x] Documentation complete
-- [ ] Neural network training (next step)
-- [ ] Model evaluation
-- [ ] Research paper publication
-
----
-
-## 🎉 Acknowledgments
-
-Inspired by Detective Conan (Case Closed) anime/manga series by Gosho Aoyama.
-
----
-
-**Status**: ✅ Ready for neural network training
+**Status**: Public engine and template framework only. No case data or training data included.
 
 **Last Updated**: 2024
 
