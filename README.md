@@ -1,82 +1,59 @@
+
 # 🕵️ Detective Conan Reasoning Engine
 
-A research-grade reasoning evaluation system with 500+ training cases for neural network training.
+A research-grade reasoning evaluation system for detective-style reasoning tasks. This public repository contains the core engine, test harness, and documentation for research and educational use.
 
-## 📊 Project Status
-
-- ✅ **500 detective cases** generated (C001-C500)
-- ✅ **1,500 training examples** extracted (3 per case)
-- ✅ **15 Detective Conan trick templates** implemented
-- ✅ **100% validation pass rate**
-- ✅ **Ready for neural network training**
-
----
-
-## 📁 Project Structure
+## 📁 Project Structure (Public Release)
 
 ```
 Conan/
-├── detective_engine/          # Core reasoning engine
-│   ├── cases/                 # 500 case files (C001-C500)
+├── detective_engine/          # Core reasoning engine (public modules only)
 │   ├── perception.py          # Perception integrity framework
 │   ├── causality.py           # Causal reasoning engine
 │   └── validator.py           # Case validation system
-│
-├── training_data/             # ML-ready training data
-│   ├── train.json             # 1,200 training examples (80%)
-│   ├── val.json               # 150 validation examples (10%)
-│   ├── test.json              # 150 test examples (10%)
-│   ├── all_examples.json      # All 1,500 examples
-│   └── statistics.txt         # Dataset statistics
-│
-├── scripts/
-│   ├── generators/            # Active generation tools
-│   │   ├── batch_generator.py         # Automated batch generation
-│   │   ├── generate_all.py            # Master generation script
-│   │   ├── extract_training_data.py   # Training data extraction
-│   │   └── conan_template_generator.py # Interactive generator
-│   │
-│   └── legacy/                # Experimental/legacy tools
-│       ├── controlled_case_pipeline.py
-│       ├── human_guided_pipeline.py
-│       ├── quick_case_builder.py
-│       └── template_case_generator.py
-│
-├── templates/                 # Case generation templates
-│   ├── templates_part1.py     # Physical deception (5 templates)
-│   ├── templates_part2.py     # Audio/visual & timing (5 templates)
-│   └── templates_part3.py     # Environmental & psychological (5 templates)
 │
 ├── tests/                     # Test files
 │   ├── test_perception.py
 │   └── test_causality.py
 │
-├── docs/                      # Documentation
-│   ├── PROJECT_COMPLETE.md    # Project completion summary
-│   ├── TRAINING_PLAN.md       # Neural network training guide
-│   ├── GENERATION_PLAN.md     # Case generation strategy
-│   ├── TEMPLATE_GUIDE.md      # Template usage guide
-│   ├── QUALITY_COMPARISON.md  # Quality analysis
-│   ├── METADATA_ANALYSIS.md   # Evidence metadata analysis
-│   ├── DELIVERY_SUMMARY.md    # Delivery summary
-│   └── README_GENERATION.md   # Generation quick start
+├── docs/                      # Documentation (public)
+│   ├── PROJECT_COMPLETE.md
+│   ├── TRAINING_PLAN.md
+│   ├── GENERATION_PLAN.md
+│   ├── TEMPLATE_GUIDE.md
+│   ├── QUALITY_COMPARISON.md
+│   ├── METADATA_ANALYSIS.md
+│   ├── DELIVERY_SUMMARY.md
+│   └── README_GENERATION.md
 │
 ├── main.py                    # Interactive case testing
 └── README.md                  # This file
 ```
 
+> **Note:**
+> - Some files and folders referenced in earlier versions (such as 500+ detective cases, automation scripts, and full training datasets) are not included in this public repository. These were internal or generated assets and are intentionally omitted for privacy, licensing, or size reasons.
+> - The `.gitignore` excludes local development files, virtual environments, Jupyter notebooks, and other non-essential or large files. Only the core engine, tests, and documentation are included here.
+
 ---
+
 
 ## 🚀 Quick Start
 
-### 1. Test Existing Cases
+### 1. Run the Engine
 ```bash
-# Interactive testing
+# Interactive testing (if supported)
 python3 main.py
-
-# Validate all cases
-python3 main.py --validate
 ```
+
+### 2. Run Tests
+```bash
+python3 -m unittest discover tests
+# or
+python3 tests/test_perception.py
+python3 tests/test_causality.py
+```
+
+---
 
 ### 2. Generate More Cases
 ```bash
