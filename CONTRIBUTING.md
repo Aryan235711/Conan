@@ -1,79 +1,28 @@
+
 # Contributing to Detective Conan Reasoning Engine
 
-Thank you for your interest in contributing! This project welcomes contributions from the community.
+Thank you for your interest in contributing! This project welcomes contributions from the community. Please help us improve the public codebase and documentation.
 
 ## 🎯 Ways to Contribute
 
-### 1. Add New Case Templates
-- Create new Detective Conan trick templates
-- Add to `templates/` folder
-- Follow existing template structure
-- Test with batch generator
-
-### 2. Improve Case Quality
-- Add evidence_meta to existing cases
-- Enhance detective questions
-- Add more contradiction types
-- Improve hidden truth explanations
-
-### 3. Enhance Documentation
-- Fix typos and errors
-- Add examples and tutorials
-- Translate documentation
-- Create video tutorials
-
-### 4. Report Bugs
-- Use GitHub Issues
-- Provide reproduction steps
-- Include error messages
-- Suggest fixes if possible
-
-### 5. Improve Code
-- Optimize generation scripts
+- Improve or refactor code
 - Add new features
-- Improve validation
-- Add tests
+- Fix bugs and issues
+- Enhance or correct documentation
+- Add examples or tutorials
+
 
 ## 📝 Contribution Process
 
-### 1. Fork the Repository
-```bash
-git clone https://github.com/yourusername/conan-reasoning-engine.git
-cd conan-reasoning-engine
-```
 
-### 2. Create a Branch
-```bash
-git checkout -b feature/your-feature-name
-```
+1. Fork the repository and clone it locally.
+2. Create a new branch for your feature or fix.
+3. Make your changes, following the existing code style and adding docstrings where appropriate.
+4. Update or add documentation as needed.
+5. Test your changes to ensure they work as expected.
+6. Commit and push your branch.
+7. Open a Pull Request on GitHub, describing your changes and referencing any related issues.
 
-### 3. Make Changes
-- Follow existing code style
-- Add docstrings
-- Update documentation
-- Add tests if applicable
-
-### 4. Test Your Changes
-```bash
-# Validate cases
-python3 main.py --validate
-
-# Test generation
-cd scripts/generators
-python3 batch_generator.py --count 1 --start C999
-```
-
-### 5. Commit and Push
-```bash
-git add .
-git commit -m "Add: your feature description"
-git push origin feature/your-feature-name
-```
-
-### 6. Create Pull Request
-- Describe your changes
-- Reference related issues
-- Wait for review
 
 ## 🎨 Code Style
 
@@ -89,104 +38,44 @@ git push origin feature/your-feature-name
 - Add screenshots if helpful
 - Keep it concise
 
+
 ## 🧪 Testing
 
-### Before Submitting
-- [ ] All cases validate successfully
-- [ ] Generation scripts work
-- [ ] Documentation is updated
-- [ ] No broken links
-- [ ] Code is formatted
+Before submitting your contribution:
+- Ensure your code runs without errors
+- Update or add documentation as needed
+- Check that your code is formatted and linted
 
-### Run Tests
-```bash
-cd tests
-python3 test_perception.py
-python3 test_causality.py
-```
 
-## 📋 Template Contribution Guidelines
 
-### New Template Structure
-```python
-"template_key": {
-    "name": "Template Name",
-    "description": "One-line description",
-    "category": "category-name",
-    "insight": {
-        "title": "...",
-        "reasoning_type": "...",
-        "summary": "...",
-        "transfer_rule": "..."
-    },
-    "evidence_template": [
-        # 6 evidence items with {variables}
-    ],
-    "hidden_truth": "...",
-    "false_narrative": "...",
-    "keywords": {
-        "answer": [...],
-        "fact_a": [...],
-        "fact_b": [...]
-    }
-}
-```
-
-### Template Requirements
-- Must have exactly 6 evidence items
-- Must include {victim}, {suspect}, {location} variables
-- Must have clear hidden truth and false narrative
-- Must include relevant keywords
 
 ## 🐛 Bug Reports
 
-### Include:
-- Python version
-- Operating system
-- Error message (full traceback)
-- Steps to reproduce
-- Expected vs actual behavior
+If you find a bug, please open a GitHub Issue and provide:
+- Your operating system and Python version
+- Steps to reproduce the issue
+- Any error messages or unexpected behavior
 
-### Example
-```markdown
-**Bug**: Generation fails with template X
-
-**Environment**:
-- Python 3.9
-- macOS 13.0
-
-**Steps**:
-1. Run `python3 batch_generator.py --template X`
-2. Error occurs
-
-**Error**:
-```
-[paste error message]
-```
-
-**Expected**: Should generate case successfully
-```
 
 ## 💡 Feature Requests
 
-### Include:
-- Clear description
-- Use case
-- Example if possible
-- Why it's valuable
+To suggest a new feature, open a GitHub Issue and include:
+- A clear description of the feature
+- The use case or motivation
+- Examples if possible
+
 
 ## 📞 Questions?
 
-- Open a GitHub Issue
-- Tag with "question"
-- We'll respond within 48 hours
+If you have questions, open a GitHub Issue and tag it as a question. We'll respond as soon as possible.
+
 
 ## 🏆 Recognition
 
 Contributors will be:
 - Listed in README.md
 - Mentioned in release notes
-- Credited in research papers (if applicable)
+
 
 ## 📜 Code of Conduct
 
@@ -201,6 +90,7 @@ Contributors will be:
 - Trolling or insulting comments
 - Personal attacks
 - Publishing private information
+
 
 ## 📄 License
 
