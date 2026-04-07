@@ -37,42 +37,20 @@ Conan/
 ---
 
 
+
 ## 🚀 Quick Start
 
 ### 1. Run the Engine
+
 ```bash
-# Interactive testing (if supported)
 python3 main.py
 ```
 
 ### 2. Run Tests
+
 ```bash
 python3 -m unittest discover tests
-# or
-python3 tests/test_perception.py
-python3 tests/test_causality.py
 ```
-
----
-
-### 2. Generate More Cases
-```bash
-# Generate 100 more cases
-cd scripts/generators
-python3 batch_generator.py --count 100 --start C501
-
-# Or use master script
-python3 generate_all.py
-```
-
-### 3. Extract Training Data
-```bash
-cd scripts/generators
-python3 extract_training_data.py
-```
-
-### 4. Start Training
-See `docs/TRAINING_PLAN.md` for complete neural network training guide.
 
 ---
 
