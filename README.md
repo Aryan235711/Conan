@@ -3,26 +3,50 @@
 
 A research-grade reasoning evaluation system for detective-style reasoning tasks. This public repository contains the core engine, test harness, and documentation for research and educational use.
 
-## 📁 Project Structure (Public Release)
+
+## 📁 Repository Structure
 
 ```
-Conan/
-├── detective_engine/          # Core reasoning engine (public modules only)
-│   ├── perception.py          # Perception integrity framework
-│   ├── causality.py           # Causal reasoning engine
-│   └── validator.py           # Case validation system
-│
-├── tests/                     # Test files
-│   ├── test_perception.py
-│   └── test_causality.py
-│
-├── docs/                      # Documentation (public)
+├── .gitignore
+├── CITATION.cff
+├── CONTRIBUTING.md
+├── FINAL_STRATEGY.md
+├── LICENSE
+├── ORGANIZATION_COMPLETE.md
+├── README.md
+├── check_what_will_push.sh
+├── detective_engine/
+│   ├── __init__.py
+│   ├── cases/
+│   │   ├── C001_silent_room.json
+│   │   ├── C002_fingerprint_paradox.json
+│   │   ├── C003_quiet_departure.json
+│   │   ├── C004_broken_timeline.json
+│   │   ├── C005_grieving_partner.json
+│   │   └── C006_poisoned_philanthropist.json
+│   └── engine/
+│       ├── __init__.py
+│       ├── bayesian_validator.py
+│       ├── case_loader.py
+│       ├── case_runner.py
+│       ├── case_validator.py
+│       ├── causality_validator.py
+│       ├── insight_graph.py
+│       ├── llm_judge.py
+│       ├── models.py
+│       ├── perception_integrity.py
+│       ├── reasoning_graph.py
+│       ├── user_profile.py
+│       └── validator.py
+├── docs/
 │   ├── PROJECT_COMPLETE.md
-│   ├── TEMPLATE_GUIDE.md
-│   └── README_GENERATION.md
-│
-├── main.py                    # Interactive case testing
-└── README.md                  # This file
+│   ├── QUALITY_COMPARISON.md
+│   ├── TRAINING_PLAN.md
+│   └── V11_V12_IMPLEMENTATION_SPEC.md
+├── main.py
+├── tests/
+│   ├── test_causality.py
+│   └── test_perception.py
 ```
 
 > **Note:**
@@ -51,14 +75,17 @@ python3 -m unittest discover tests
 
 
 
+
 ## 📚 Documentation
 
 - **README.md** (this file) - Project overview
+- **CONTRIBUTING.md** - Contribution guidelines
 - **docs/PROJECT_COMPLETE.md** - Completion summary
-- **docs/README_GENERATION.md** - Quick generation guide
-- **docs/TEMPLATE_GUIDE.md** - Template usage
+- **docs/QUALITY_COMPARISON.md** - Quality analysis
+- **docs/TRAINING_PLAN.md** - Training plan (for reference)
+- **docs/V11_V12_IMPLEMENTATION_SPEC.md** - Implementation specification
 
-> Note: Additional internal documentation exists in the docs/ folder but is not listed here, as it contains internal or archival information not relevant to the public release.
+> Note: Only files listed above are present in the public repository. No large datasets, automation scripts, or private/internal data are included.
 
 ---
 
