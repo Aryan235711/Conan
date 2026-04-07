@@ -55,8 +55,8 @@ A research-grade reasoning evaluation engine for detective-style logic and AI ta
 ├── docs/
 │   ├── PROJECT_COMPLETE.md
 │   ├── QUALITY_COMPARISON.md
-│   ├── TRAINING_PLAN.md
-│   └── V11_V12_IMPLEMENTATION_SPEC.md
+│   
+│   
 ├── main.py
 ├── tests/
 │   ├── test_causality.py
