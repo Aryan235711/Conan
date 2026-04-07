@@ -100,8 +100,6 @@ python3 -m unittest discover tests
 - **CONTRIBUTING.md** - Contribution guidelines
 - **docs/PROJECT_COMPLETE.md** - Completion summary
 - **docs/QUALITY_COMPARISON.md** - Quality analysis
-- **docs/TRAINING_PLAN.md** - Training plan (for reference)
-- **docs/V11_V12_IMPLEMENTATION_SPEC.md** - Implementation specification
 
 
 > Note: Only files listed above are present in the public repository. No large datasets, automation scripts, or private/internal data are included.

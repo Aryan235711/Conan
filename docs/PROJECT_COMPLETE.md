@@ -74,7 +74,6 @@ Conan/
 │
 └── Documentation:
     ├── README_GENERATION.md
-    ├── TRAINING_PLAN.md
     ├── GENERATION_PLAN.md
     ├── TEMPLATE_GUIDE.md
     ├── QUALITY_COMPARISON.md
@@ -165,7 +164,6 @@ Conan/
 - `training_data/test.json` - Test examples
 
 ### Documentation:
-- `TRAINING_PLAN.md` - Complete training guide
 - `README_GENERATION.md` - Quick start guide
 
 ### Sample Cases:
@@ -203,7 +201,6 @@ trainer.train()
 model.save_pretrained("./conan_detective_model")
 ```
 
-See `TRAINING_PLAN.md` for complete code.
 
 ---
 

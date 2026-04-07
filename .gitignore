@@ -1,3 +1,6 @@
+# Ignore internal documentation not for public release
+docs/TRAINING_PLAN.md
+docs/V11_V12_IMPLEMENTATION_SPEC.md
 # Python
 __pycache__/
 *.py[cod]
