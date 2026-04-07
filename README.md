@@ -111,6 +111,6 @@ For help, see the `docs/` folder or open a GitHub issue.
 
 **Status**: Public engine and template framework only. No case data or training data included.
 
-**Last Updated**: 2024
+**Last Updated**: 2026
 
 **Version**: 1.0.0

@@ -6,7 +6,7 @@ authors:
     orcid: "https://orcid.org/0000-0000-0000-0000"  # Add your ORCID if you have one
 title: "Detective Conan Reasoning Engine: A Dataset of 500 Cases for Structured Reasoning Evaluation"
 version: 1.0.0
-date-released: 2024-01-15
+date-released: 2026-04-07
 url: "https://github.com/yourusername/conan-reasoning-engine"
 repository-code: "https://github.com/yourusername/conan-reasoning-engine"
 keywords:
