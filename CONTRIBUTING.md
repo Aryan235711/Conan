@@ -10,6 +10,7 @@ Thank you for your interest in contributing! This project welcomes contributions
 - Fix bugs and issues
 - Enhance or correct documentation
 - Add examples or tutorials
+- Add more cases with proper format
 
 
 ## 📝 Contribution Process
