@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this dataset or code in your research, please cite it as below."
+authors:
+  - family-names: "Your Last Name"
+    given-names: "Suraj"
+    orcid: "https://orcid.org/0000-0000-0000-0000"  # Add your ORCID if you have one
+title: "Detective Conan Reasoning Engine: A Dataset of 500 Cases for Structured Reasoning Evaluation"
+version: 1.0.0
+date-released: 2024-01-15
+url: "https://github.com/yourusername/conan-reasoning-engine"
+repository-code: "https://github.com/yourusername/conan-reasoning-engine"
+keywords:
+  - reasoning
+  - deception-detection
+  - natural-language-processing
+  - machine-learning
+  - dataset
+  - detective-reasoning
+  - structured-reasoning
+license: MIT
+abstract: >
+  A research-grade reasoning evaluation system featuring 500 detective cases
+  based on Detective Conan deception patterns. The dataset includes 15 different
+  reasoning categories and 1,500 training examples for neural network training.
+  Each case contains evidence, contradictions, hidden truth, and false narratives,
+  designed to evaluate structured reasoning and deception detection capabilities
+  in language models.

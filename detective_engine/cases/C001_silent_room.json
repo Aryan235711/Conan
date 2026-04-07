@@ -1,0 +1,160 @@
+{
+  "insights": [
+    {
+      "key": "STAGED_SCENE",
+      "title": "Staged Scene Detection",
+      "reasoning_type": "scene consistency analysis",
+      "summary": "An orderly scene can be deliberately arranged to project innocence.",
+      "transfer_rule": "Do not treat surface calm as proof of natural events."
+    }
+  ],
+  "cases": [
+    {
+      "id": "C001",
+      "title": "The Silent Room",
+      "category": "logic",
+      "summary": "A room appears calm and undisturbed, yet several details suggest the scene may have been curated. Apply the three-layer protocol.",
+      "evidence": [
+        "A chair is slightly pulled back from the table.",
+        "A notebook lies open on the table.",
+        "A glass of water is half full.",
+        "A window is slightly open.",
+        "Curtains are moving inward.",
+        "The room appears otherwise undisturbed."
+      ],
+      "detective_questions": [
+        "What are all possible reasons the window is open?",
+        "Was the notebook abandoned suddenly or intentionally left open?",
+        "Why is the chair not aligned with the table?",
+        "What explains the inward movement of the curtains?"
+      ],
+      "analysis_protocol": [
+        "State raw observations only.",
+        "For each major clue, list 2–3 explanations.",
+        "Delay commitment until contradictions are mapped."
+      ],
+      "scenarios": [
+        "A person exited through the window.",
+        "The scene was staged.",
+        "A person is still hiding inside the room."
+      ],
+      "hidden_truth": "The room's order should not be trusted at face value.",
+      "false_narrative": "The room is calm, so nothing deceptive happened.",
+      "teaches": ["STAGED_SCENE"],
+      "evidence_meta": [
+        {
+          "id": "ev_01",
+          "text": "A chair is slightly pulled back from the table.",
+          "diagnostic_weight": 0.72,
+          "salience_level": 0.65,
+          "misdirection_risk": 0.10,
+          "salience_confidence": 0.80,
+          "bias_tags": ["activity-trace", "contradiction-anchor"],
+          "critical": true
+        },
+        {
+          "id": "ev_02",
+          "text": "A notebook lies open on the table.",
+          "diagnostic_weight": 0.68,
+          "salience_level": 0.70,
+          "misdirection_risk": 0.15,
+          "salience_confidence": 0.75,
+          "bias_tags": ["activity-trace"],
+          "critical": true
+        },
+        {
+          "id": "ev_03",
+          "text": "A glass of water is half full.",
+          "diagnostic_weight": 0.40,
+          "salience_level": 0.55,
+          "misdirection_risk": 0.20,
+          "salience_confidence": 0.65,
+          "bias_tags": ["activity-trace"],
+          "critical": false
+        },
+        {
+          "id": "ev_04",
+          "text": "A window is slightly open.",
+          "diagnostic_weight": 0.50,
+          "salience_level": 0.80,
+          "misdirection_risk": 0.60,
+          "salience_confidence": 0.85,
+          "bias_tags": ["misdirection-anchor", "inference-trap-target"],
+          "critical": true
+        },
+        {
+          "id": "ev_05",
+          "text": "Curtains are moving inward.",
+          "diagnostic_weight": 0.35,
+          "salience_level": 0.75,
+          "misdirection_risk": 0.55,
+          "salience_confidence": 0.70,
+          "bias_tags": ["misdirection-anchor"],
+          "critical": false
+        },
+        {
+          "id": "ev_06",
+          "text": "The room appears otherwise undisturbed.",
+          "diagnostic_weight": 0.85,
+          "salience_level": 0.50,
+          "misdirection_risk": 0.05,
+          "salience_confidence": 0.90,
+          "bias_tags": ["contradiction-anchor", "false-narrative-anchor"],
+          "critical": true
+        }
+      ],
+      "contradictions": [
+        {
+          "fact_a_keywords": ["chair pulled", "notebook open"],
+          "fact_b_keywords": ["undisturbed", "calm", "no signs"],
+          "description": "Activity traces (chair, notebook) vs. 'undisturbed' appearance."
+        }
+      ],
+      "solution": {
+        "unlock_key": "STAGED_SCENE",
+        "elimination_target": "hiding inside",
+        "direct_answer_keywords": ["scene staged", "staged scene", "arranged room"],
+        "must_reject_false_narrative": true,
+          "inference_traps": [
+            {
+              "description": "Open window does not by itself prove entry/exit through the window; it may be part of staging.",
+              "trap_keywords": ["entered through the window", "exited through the window", "window proves entry", "window proves exit"],
+              "penalty": 1
+            },
+            {
+              "description": "Surface calm is not evidence that nothing happened; orderly scenes can be fabricated.",
+              "trap_keywords": ["nothing happened", "room is calm so nothing happened", "undisturbed means innocent"],
+              "penalty": 1
+            }
+          ],
+        "required_concept_rules": [
+          {
+            "name": "Scene detail grounding",
+            "description": "Reasoning references actual scene elements with their observed states.",
+            "concept_groups": [
+              ["chair", "window", "curtain", "notebook", "glass"],
+              ["pulled", "open", "moving", "half", "inward", "undisturbed"]
+            ]
+          },
+          {
+            "name": "Staging recognition",
+            "description": "Recognizes the scene may be deliberately arranged despite calm surface.",
+            "concept_groups": [
+              ["staged", "arranged", "curated", "set up", "constructed", "placed", "deliberate"],
+              ["scene", "room", "appearance", "calm", "order"]
+            ]
+          }
+        ],
+        "forbidden_patterns": [
+          {
+            "description": "Accepting surface calm as genuine without questioning.",
+            "concept_groups": [
+              ["calm", "undisturbed", "peaceful", "quiet"],
+              ["natural", "normal", "nothing happened", "innocent", "no deception"]
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

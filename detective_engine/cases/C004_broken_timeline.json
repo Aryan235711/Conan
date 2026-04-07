@@ -1,0 +1,235 @@
+{
+  "insights": [
+    {
+      "key": "TIMELINE_RECONSTRUCTION",
+      "title": "Timeline Reconstruction",
+      "reasoning_type": "temporal logic",
+      "summary": "Events must be placed in a consistent sequence. Physical state changes (temperature, rigor, decomposition) anchor the true timeline.",
+      "transfer_rule": "When testimony contradicts physics, trust physics."
+    }
+  ],
+  "cases": [
+    {
+      "id": "C004",
+      "title": "The Broken Timeline",
+      "category": "forensic-timeline",
+      "summary": "A body is found in an apartment. Two witnesses provide alibis, but the physical evidence constrains the timeline in a way that makes one alibi impossible. You must reconstruct the true sequence of events using physics, not testimony.",
+      "evidence": [
+        "The body is found at 08:00 in a locked apartment.",
+        "Rigor mortis has set into the jaw and neck but not the limbs.",
+        "A half-eaten meal sits on the table — the food is dry and cold.",
+        "A digital thermostat log shows the heating was turned off at 23:14 the previous night.",
+        "The apartment temperature is 16°C at discovery.",
+        "Witness A says they spoke to the victim by phone at 01:00.",
+        "Witness B says they saw the victim leaving a shop at 22:30 the previous evening.",
+        "A receipt from that shop is timestamped 22:28.",
+        "The victim's phone shows no outgoing calls after 23:00."
+      ],
+      "detective_questions": [
+        "What does partial rigor mortis tell you about time of death?",
+        "How does the thermostat shutoff relate to the victim's last actions?",
+        "Which witness statement is contradicted by physical evidence?",
+        "What is the earliest and latest possible time of death based on all physical constraints?",
+        "Why would a witness lie about the phone call?"
+      ],
+      "analysis_protocol": [
+        "List physical time anchors separately from testimony.",
+        "Build a timeline using ONLY physical evidence first.",
+        "Then overlay witness statements and check for conflicts.",
+        "Identify the inconsistent testimony and explain why it fails."
+      ],
+      "scenarios": [
+        "Witness A is truthful — death occurred after 01:00.",
+        "Witness B is truthful — death occurred between 22:30 and 01:00.",
+        "Witness A fabricated the phone call — death occurred before 01:00."
+      ],
+      "evidence_meta": [
+        {
+          "id": "ev_01",
+          "text": "The body is found at 08:00 in a locked apartment.",
+          "diagnostic_weight": 0.20,
+          "salience_level": 0.50,
+          "misdirection_risk": 0.10,
+          "salience_confidence": 0.70,
+          "bias_tags": ["framing-context", "scene-setter"],
+          "critical": false
+        },
+        {
+          "id": "ev_02",
+          "text": "Rigor mortis has set into the jaw and neck but not the limbs.",
+          "diagnostic_weight": 0.88,
+          "salience_level": 0.65,
+          "misdirection_risk": 0.15,
+          "salience_confidence": 0.85,
+          "bias_tags": ["physical-evidence", "timeline-anchor", "key-evidence"],
+          "critical": true
+        },
+        {
+          "id": "ev_03",
+          "text": "A half-eaten meal sits on the table — the food is dry and cold.",
+          "diagnostic_weight": 0.35,
+          "salience_level": 0.55,
+          "misdirection_risk": 0.20,
+          "salience_confidence": 0.75,
+          "bias_tags": ["supporting-detail", "timeline-corroboration"],
+          "critical": false
+        },
+        {
+          "id": "ev_04",
+          "text": "A digital thermostat log shows the heating was turned off at 23:14 the previous night.",
+          "diagnostic_weight": 0.85,
+          "salience_level": 0.40,
+          "misdirection_risk": 0.10,
+          "salience_confidence": 0.80,
+          "bias_tags": ["quiet-anchor", "timeline-anchor", "physical-evidence", "key-evidence"],
+          "critical": true
+        },
+        {
+          "id": "ev_05",
+          "text": "The apartment temperature is 16°C at discovery.",
+          "diagnostic_weight": 0.30,
+          "salience_level": 0.30,
+          "misdirection_risk": 0.15,
+          "salience_confidence": 0.70,
+          "bias_tags": ["supporting-detail", "abstract-anchor"],
+          "critical": false
+        },
+        {
+          "id": "ev_06",
+          "text": "Witness A says they spoke to the victim by phone at 01:00.",
+          "diagnostic_weight": 0.15,
+          "salience_level": 0.85,
+          "misdirection_risk": 0.90,
+          "salience_confidence": 0.90,
+          "bias_tags": ["primary-trap", "misdirection-anchor", "false-testimony", "testimony"],
+          "critical": false
+        },
+        {
+          "id": "ev_07",
+          "text": "Witness B says they saw the victim leaving a shop at 22:30 the previous evening.",
+          "diagnostic_weight": 0.40,
+          "salience_level": 0.50,
+          "misdirection_risk": 0.15,
+          "salience_confidence": 0.75,
+          "bias_tags": ["testimony", "timeline-corroboration"],
+          "critical": false
+        },
+        {
+          "id": "ev_08",
+          "text": "A receipt from that shop is timestamped 22:28.",
+          "diagnostic_weight": 0.45,
+          "salience_level": 0.35,
+          "misdirection_risk": 0.10,
+          "salience_confidence": 0.75,
+          "bias_tags": ["physical-evidence", "timeline-corroboration", "quiet-anchor"],
+          "critical": false
+        },
+        {
+          "id": "ev_09",
+          "text": "The victim's phone shows no outgoing calls after 23:00.",
+          "diagnostic_weight": 0.92,
+          "salience_level": 0.50,
+          "misdirection_risk": 0.05,
+          "salience_confidence": 0.90,
+          "bias_tags": ["contradiction-anchor", "key-evidence", "physical-evidence", "timeline-anchor"],
+          "critical": true
+        }
+      ],
+      "requires_all": ["STAGED_SCENE"],
+      "teaches": ["TIMELINE_RECONSTRUCTION"],
+      "hidden_truth": "Witness A lied about the 01:00 call. The phone records prove no call occurred. Death happened between 23:00 and 00:00, consistent with partial rigor at 08:00 and the thermostat shutoff.",
+      "false_narrative": "Witness A's phone call at 01:00 proves the victim was alive at that time.",
+      "contradictions": [
+        {
+          "fact_a_keywords": ["phone call", "01:00", "witness a", "spoke"],
+          "fact_b_keywords": ["no outgoing calls after 23:00", "phone shows no", "phone records"],
+          "description": "Witness A claims a 01:00 call, but the phone log shows no calls after 23:00."
+        },
+        {
+          "fact_a_keywords": ["rigor mortis", "jaw", "neck", "partial rigor"],
+          "fact_b_keywords": ["01:00", "after 01:00", "alive at 01"],
+          "description": "Partial rigor at 08:00 suggests death ~8-10 hours prior (22:00-00:00), not after 01:00."
+        },
+        {
+          "fact_a_keywords": ["thermostat", "23:14", "heating off"],
+          "fact_b_keywords": ["alive", "01:00", "after midnight"],
+          "description": "The heating was turned off at 23:14 — likely the victim's last deliberate action."
+        }
+      ],
+      "solution": {
+        "unlock_key": "TIMELINE_RECONSTRUCTION",
+        "elimination_target": "witness a is truthful",
+        "direct_answer_keywords": [
+          "witness a lied", "fabricated call", "no call after 23",
+          "death before 01:00", "phone records contradict"
+        ],
+        "must_reject_false_narrative": true,
+        "inference_traps": [
+          {
+            "description": "Witness testimony cannot override phone logs and rigor mortis when reconstructing the timeline.",
+            "trap_keywords": ["witness a proves alive at 01:00", "phone call proves 01:00", "trust witness a over the phone log"],
+            "penalty": 1
+          },
+          {
+            "description": "Partial rigor at 08:00 is inconsistent with death after 01:00.",
+            "trap_keywords": ["died after 01:00", "alive after 01:00", "rigor fits death after 01:00"],
+            "penalty": 1
+          }
+        ],
+        "required_concept_rules": [
+          {
+            "name": "Physical time anchoring",
+            "description": "Uses rigor mortis, temperature, or phone logs to bound the timeline.",
+            "concept_groups": [
+              ["rigor", "temperature", "thermostat", "phone log", "phone record"],
+              ["time", "hour", "before", "after", "between", "timeline", "window"]
+            ]
+          },
+          {
+            "name": "Testimony-physics conflict",
+            "description": "Identifies that a witness statement is contradicted by physical evidence.",
+            "concept_groups": [
+              ["witness", "testimony", "alibi", "claim", "said", "spoke"],
+              ["contradict", "impossible", "inconsistent", "conflict", "lied", "fabricat"]
+            ]
+          },
+          {
+            "name": "Timeline reconstruction",
+            "description": "Builds a sequence of events from anchored physical facts.",
+            "concept_groups": [
+              ["sequence", "timeline", "reconstruct", "order", "first", "then", "before"],
+              ["death", "thermostat", "rigor", "call", "receipt"]
+            ]
+          }
+        ],
+        "insight_usage_rules": [
+          {
+            "insight_key": "NARRATIVE_FABRICATION",
+            "description": "Applied narrative fabrication reasoning — the witness constructed a false story.",
+            "concept_groups": [
+              ["fabricat", "construct", "false", "staged", "planted", "invented"],
+              ["story", "narrative", "alibi", "call", "testimony"]
+            ]
+          }
+        ],
+        "forbidden_patterns": [
+          {
+            "description": "Trusting witness testimony over physical evidence.",
+            "concept_groups": [
+              ["witness a", "said", "told", "claimed"],
+              ["therefore", "so", "proves", "confirms", "alive at 01"]
+            ],
+            "penalty": 2
+          },
+          {
+            "description": "Ignoring the phone log contradiction.",
+            "concept_groups": [
+              ["phone call", "01:00"],
+              ["possible", "could have", "maybe", "might"]
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

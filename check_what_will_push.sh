@@ -1,0 +1,27 @@
+#!/bin/bash
+echo "🔍 Checking what will be pushed to GitHub..."
+echo "=============================================="
+echo ""
+echo "✅ PUBLIC (will be pushed):"
+echo ""
+echo "📁 Cases:"
+ls -1 detective_engine/cases/*.json 2>/dev/null | grep -v "_generated" | head -10
+echo ""
+echo "📁 Docs:"
+ls -1 docs/*.md 2>/dev/null | grep -v -E "(GENERATION|TEMPLATE|DELIVERY|README_GENERATION|REPOSITORY|READY|ORGANIZATION|STRATEGIC|METADATA_ANALYSIS)" | head -10
+echo ""
+echo "📁 Other:"
+ls -1 *.md LICENSE CITATION.cff .gitignore main.py 2>/dev/null
+echo ""
+echo "❌ PRIVATE (will be excluded by .gitignore):"
+echo ""
+echo "📁 Generated cases:"
+ls -1 detective_engine/cases/*_generated.json 2>/dev/null | wc -l | xargs echo "   Count:"
+echo ""
+echo "📁 Private folders:"
+[ -d scripts ] && echo "   ✓ scripts/"
+[ -d templates ] && echo "   ✓ templates/"
+[ -d training_data ] && echo "   ✓ training_data/"
+echo ""
+echo "📁 Private docs:"
+ls -1 docs/*.md 2>/dev/null | grep -E "(GENERATION|TEMPLATE|DELIVERY|README_GENERATION|REPOSITORY|READY|ORGANIZATION|STRATEGIC|METADATA_ANALYSIS)"

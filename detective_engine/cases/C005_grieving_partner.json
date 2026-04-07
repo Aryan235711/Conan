@@ -1,0 +1,295 @@
+{
+  "insights": [
+    {
+      "key": "DECEPTION_DETECTION",
+      "title": "Deception Detection",
+      "reasoning_type": "behavioral contradiction analysis",
+      "summary": "People who lie often over-explain, volunteer unnecessary details, or exhibit behavior inconsistent with their claimed emotional state.",
+      "transfer_rule": "When behavior contradicts stated emotion or motive, the behavior is more reliable than the words."
+    }
+  ],
+  "cases": [
+    {
+      "id": "C005",
+      "title": "The Grieving Partner",
+      "category": "psychological-adversarial",
+      "summary": "A partner reports their spouse missing, expressing deep distress. But subtle behavioral clues contradict the emotional display. This case contains THREE deliberately planted false clues designed to misdirect you. Trust behavior over words, and physics over emotion.",
+      "evidence": [
+        "The partner called police at 07:15 to report their spouse missing since last night.",
+        "The partner is visibly crying and pacing during the interview.",
+        "The partner says: 'I cooked dinner for both of us but they never came home.'",
+        "The kitchen shows a single plate, single set of cutlery, and one glass used.",
+        "The partner says: 'I tried calling all night — check my phone.'",
+        "The partner's phone shows 14 calls to the spouse between 19:00 and 23:00, but zero calls between 23:00 and 07:15.",
+        "The partner mentions: 'I noticed their car was gone when I woke up.'",
+        "A neighbor reports hearing loud arguing around 22:30.",
+        "The car is found 3 km away, keys in the ignition, driver door open.",
+        "FALSE CLUE: A 'suspicious stranger' was seen near the building at 20:00 (later confirmed as a delivery driver).",
+        "FALSE CLUE: A broken window in the stairwell (pre-existing damage reported weeks ago).",
+        "FALSE CLUE: The spouse's wallet was found on the car seat (the spouse always left it in the car)."
+      ],
+      "detective_questions": [
+        "Does the partner's emotional display match their stated actions?",
+        "What does the single plate tell you about the dinner claim?",
+        "Why did the calling pattern stop abruptly at 23:00?",
+        "What is the significance of the neighbor's report?",
+        "Which pieces of evidence are deliberately misleading?",
+        "What story does the partner WANT you to believe?"
+      ],
+      "analysis_protocol": [
+        "Separate behavioral facts from verbal claims.",
+        "Identify which clues are planted to mislead you.",
+        "Compare the partner's story with physical evidence point by point.",
+        "List contradictions between claimed behavior and actual evidence.",
+        "Only commit after filtering out adversarial noise."
+      ],
+      "scenarios": [
+        "The spouse left voluntarily after an argument.",
+        "The partner is truthful — the spouse vanished mysteriously.",
+        "The partner is lying — they know what happened after 23:00.",
+        "An unknown third party abducted the spouse."
+      ],
+      "requires_all": ["NARRATIVE_FABRICATION", "TIMELINE_RECONSTRUCTION"],
+      "teaches": ["DECEPTION_DETECTION"],
+      "evidence_meta": [
+        {
+          "id": "ev_01",
+          "text": "The partner called police at 07:15 to report their spouse missing since last night.",
+          "diagnostic_weight": 0.25,
+          "salience_level": 0.40,
+          "misdirection_risk": 0.20,
+          "salience_confidence": 0.75,
+          "bias_tags": ["pro-social-behavior"],
+          "critical": false
+        },
+        {
+          "id": "ev_02",
+          "text": "The partner is visibly crying and pacing during the interview.",
+          "diagnostic_weight": 0.10,
+          "salience_level": 0.92,
+          "misdirection_risk": 0.92,
+          "salience_confidence": 0.88,
+          "bias_tags": ["emotional-salience", "primary-trap", "misdirection-anchor", "performance-trap"],
+          "critical": false
+        },
+        {
+          "id": "ev_03",
+          "text": "The partner says: 'I cooked dinner for both of us but they never came home.'",
+          "diagnostic_weight": 0.55,
+          "salience_level": 0.60,
+          "misdirection_risk": 0.30,
+          "salience_confidence": 0.75,
+          "bias_tags": ["contradiction-setup", "testimony"],
+          "critical": false
+        },
+        {
+          "id": "ev_04",
+          "text": "The kitchen shows a single plate, single set of cutlery, and one glass used.",
+          "diagnostic_weight": 0.88,
+          "salience_level": 0.50,
+          "misdirection_risk": 0.05,
+          "salience_confidence": 0.88,
+          "bias_tags": ["contradiction-anchor", "physical-evidence", "testimony-contradiction"],
+          "critical": true
+        },
+        {
+          "id": "ev_05",
+          "text": "The partner says: 'I tried calling all night — check my phone.'",
+          "diagnostic_weight": 0.50,
+          "salience_level": 0.55,
+          "misdirection_risk": 0.25,
+          "salience_confidence": 0.75,
+          "bias_tags": ["testimony", "contradiction-setup"],
+          "critical": false
+        },
+        {
+          "id": "ev_06",
+          "text": "The partner's phone shows 14 calls to the spouse between 19:00 and 23:00, but zero calls between 23:00 and 07:15.",
+          "diagnostic_weight": 0.92,
+          "salience_level": 0.55,
+          "misdirection_risk": 0.05,
+          "salience_confidence": 0.90,
+          "bias_tags": ["timeline-anchor", "contradiction-anchor", "key-evidence"],
+          "critical": true
+        },
+        {
+          "id": "ev_07",
+          "text": "The partner mentions: 'I noticed their car was gone when I woke up.'",
+          "diagnostic_weight": 0.35,
+          "salience_level": 0.55,
+          "misdirection_risk": 0.35,
+          "salience_confidence": 0.70,
+          "bias_tags": ["testimony", "timeline-anchor"],
+          "critical": false
+        },
+        {
+          "id": "ev_08",
+          "text": "A neighbor reports hearing loud arguing around 22:30.",
+          "diagnostic_weight": 0.75,
+          "salience_level": 0.65,
+          "misdirection_risk": 0.15,
+          "salience_confidence": 0.82,
+          "bias_tags": ["external-witness", "timeline-anchor"],
+          "critical": true
+        },
+        {
+          "id": "ev_09",
+          "text": "The car is found 3 km away, keys in the ignition, driver door open.",
+          "diagnostic_weight": 0.45,
+          "salience_level": 0.82,
+          "misdirection_risk": 0.55,
+          "salience_confidence": 0.80,
+          "bias_tags": ["misdirection-anchor", "visual-salience", "external-event-bias"],
+          "critical": false
+        },
+        {
+          "id": "ev_10",
+          "text": "FALSE CLUE: A 'suspicious stranger' was seen near the building at 20:00 (later confirmed as a delivery driver).",
+          "diagnostic_weight": 0.05,
+          "salience_level": 0.88,
+          "misdirection_risk": 0.92,
+          "salience_confidence": 0.90,
+          "bias_tags": ["false-clue", "external-agent-bias", "distractor"],
+          "critical": false
+        },
+        {
+          "id": "ev_11",
+          "text": "FALSE CLUE: A broken window in the stairwell (pre-existing damage reported weeks ago).",
+          "diagnostic_weight": 0.05,
+          "salience_level": 0.65,
+          "misdirection_risk": 0.65,
+          "salience_confidence": 0.85,
+          "bias_tags": ["false-clue", "physical-intrusion-bias", "distractor"],
+          "critical": false
+        },
+        {
+          "id": "ev_12",
+          "text": "FALSE CLUE: The spouse's wallet was found on the car seat (the spouse always left it in the car).",
+          "diagnostic_weight": 0.08,
+          "salience_level": 0.72,
+          "misdirection_risk": 0.65,
+          "salience_confidence": 0.80,
+          "bias_tags": ["false-clue", "victim-focus-bias", "distractor"],
+          "critical": false
+        }
+      ],
+      "hidden_truth": "The partner is lying. They did not cook dinner for two. The calls stopped because the partner knows what happened after 23:00. The argument at 22:30 escalated. The three 'suspicious' clues are adversarial noise.",
+      "false_narrative": "The partner is a distraught, innocent spouse whose loved one vanished mysteriously.",
+      "contradictions": [
+        {
+          "fact_a_keywords": ["cooked dinner for both", "dinner for two", "both of us"],
+          "fact_b_keywords": ["single plate", "one plate", "single set", "one glass"],
+          "description": "Claims to have cooked for two, but only one place setting was used."
+        },
+        {
+          "fact_a_keywords": ["tried calling all night", "called all night"],
+          "fact_b_keywords": ["zero calls", "no calls", "stopped calling", "23:00"],
+          "description": "Claims to have called all night, but phone shows calls stopped at 23:00."
+        },
+        {
+          "fact_a_keywords": ["noticed car gone", "woke up", "morning"],
+          "fact_b_keywords": ["arguing", "22:30", "loud argument", "neighbor heard"],
+          "description": "Claims ignorance of when spouse left, but a loud argument occurred at 22:30."
+        }
+      ],
+      "solution": {
+        "unlock_key": "DECEPTION_DETECTION",
+        "elimination_target": "partner is truthful",
+        "direct_answer_keywords": [
+          "partner is lying", "partner knows",
+          "deception", "story doesn't match"
+        ],
+        "must_reject_false_narrative": true,
+        "inference_traps": [
+          {
+            "description": "Visible distress is not proof of innocence; behavior and evidence outrank performance.",
+            "trap_keywords": ["crying proves innocence", "distress means truthful", "partner is innocent because they were crying"],
+            "penalty": 1
+          },
+          {
+            "description": "The stranger, broken window, and wallet are planted false clues and should not drive the conclusion.",
+            "trap_keywords": ["stranger abducted", "broken window proves intruder", "wallet on seat proves kidnapping"],
+            "penalty": 1
+          }
+        ],
+        "required_concept_rules": [
+          {
+            "name": "Behavioral contradiction",
+            "description": "Identifies mismatch between claimed actions and physical evidence.",
+            "concept_groups": [
+              ["claim", "said", "says", "stated", "told"],
+              ["but", "however", "contradict", "doesn't match", "inconsistent", "single plate"]
+            ]
+          },
+          {
+            "name": "Call pattern analysis",
+            "description": "Recognizes the suspicious gap in calling behavior.",
+            "concept_groups": [
+              ["call", "phone", "called"],
+              ["stopped", "gap", "zero", "23:00", "no calls after", "abrupt"]
+            ]
+          },
+          {
+            "name": "False clue identification",
+            "description": "Correctly identifies at least one planted false clue.",
+            "concept_groups": [
+              ["false clue", "misleading", "irrelevant", "planted", "red herring", "distraction", "noise"],
+              ["stranger", "delivery", "window", "wallet", "pre-existing"]
+            ]
+          },
+          {
+            "name": "Motive inference from behavior",
+            "description": "The argument + call gap + single plate together suggest the partner had motive and knowledge.",
+            "concept_groups": [
+              ["argument", "22:30", "fight", "arguing"],
+              ["motive", "knew", "knows", "involved", "guilty", "hiding"]
+            ]
+          }
+        ],
+        "insight_usage_rules": [
+          {
+            "insight_key": "NARRATIVE_FABRICATION",
+            "description": "Applied narrative fabrication — the partner constructed a fake distress story.",
+            "concept_groups": [
+              ["fabricat", "construct", "staged", "fake", "acted"],
+              ["story", "narrative", "distress", "crying", "display"]
+            ]
+          },
+          {
+            "insight_key": "TIMELINE_RECONSTRUCTION",
+            "description": "Applied timeline reconstruction — the call gap anchors a suspicious window.",
+            "concept_groups": [
+              ["timeline", "sequence", "23:00", "time", "gap"],
+              ["stop", "before", "after", "window", "between"]
+            ]
+          }
+        ],
+        "forbidden_patterns": [
+          {
+            "description": "Accepting the partner's emotional display as proof of innocence.",
+            "concept_groups": [
+              ["crying", "distress", "upset", "pacing", "emotional"],
+              ["innocent", "genuine", "real", "honest", "truthful"]
+            ],
+            "penalty": 2
+          },
+          {
+            "description": "Treating a false clue as significant evidence.",
+            "concept_groups": [
+              ["stranger", "broken window", "wallet on seat"],
+              ["suspicious", "important", "key clue", "significant", "connected"]
+            ],
+            "penalty": 2
+          },
+          {
+            "description": "Blaming an unknown third party without evidence.",
+            "concept_groups": [
+              ["unknown person", "abducted", "kidnapped", "third party"],
+              ["must have", "probably", "likely"]
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

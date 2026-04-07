@@ -1,0 +1,220 @@
+{
+  "insights": [
+    {
+      "key": "NARRATIVE_FABRICATION",
+      "title": "Narrative Fabrication",
+      "reasoning_type": "multi-case synthesis",
+      "summary": "A false story can be built by combining staged normality with erased evidence.",
+      "transfer_rule": "Synthesize scene design, forensic absence, and timeline contradiction into one model."
+    }
+  ],
+  "cases": [
+    {
+      "id": "C003",
+      "title": "The Quiet Departure",
+      "category": "synthesis",
+      "summary": "A disappearance appears voluntary, but the scene contains signs of staging, erasure, and timeline mismatch. This case requires insights from both C001 and C002.",
+      "evidence": [
+        "A coat is missing from the rack.",
+        "The apartment door is unlocked.",
+        "The desk is neatly organized.",
+        "A train ticket is placed on the desk.",
+        "The coffee in the mug is still warm.",
+        "Security footage has a twelve-minute gap.",
+        "No fingerprints are visible on the train ticket."
+      ],
+      "detective_questions": [
+        "What story does the scene appear to tell at first glance?",
+        "Which details seem too convenient for that story?",
+        "What does the warm coffee imply about timing?",
+        "Why would a ticket be present but fingerprint-free?",
+        "How do the camera gap and the calm room interact?"
+      ],
+      "analysis_protocol": [
+        "Separate raw observations from story-like interpretations.",
+        "Generate 2–3 explanations for each major clue before selecting any theory.",
+        "Only commit after combining scene design, forensic absence, and time logic."
+      ],
+      "scenarios": [
+        "The resident left voluntarily for the train.",
+        "A second actor staged a voluntary departure narrative.",
+        "The resident planned a disappearance alone and cleaned everything."
+      ],
+      "evidence_meta": [
+        {
+          "id": "ev_01",
+          "text": "A coat is missing from the rack.",
+          "diagnostic_weight": 0.20,
+          "salience_level": 0.55,
+          "misdirection_risk": 0.40,
+          "salience_confidence": 0.70,
+          "bias_tags": ["false-narrative-support", "voluntary-departure-prop"],
+          "critical": false
+        },
+        {
+          "id": "ev_02",
+          "text": "The apartment door is unlocked.",
+          "diagnostic_weight": 0.15,
+          "salience_level": 0.40,
+          "misdirection_risk": 0.35,
+          "salience_confidence": 0.65,
+          "bias_tags": ["false-narrative-support", "voluntary-departure-prop"],
+          "critical": false
+        },
+        {
+          "id": "ev_03",
+          "text": "The desk is neatly organized.",
+          "diagnostic_weight": 0.65,
+          "salience_level": 0.35,
+          "misdirection_risk": 0.15,
+          "salience_confidence": 0.70,
+          "bias_tags": ["quiet-anchor", "staging-indicator", "baseline-anchor"],
+          "critical": true
+        },
+        {
+          "id": "ev_04",
+          "text": "A train ticket is placed on the desk.",
+          "diagnostic_weight": 0.30,
+          "salience_level": 0.85,
+          "misdirection_risk": 0.80,
+          "salience_confidence": 0.88,
+          "bias_tags": ["primary-trap", "misdirection-anchor", "voluntary-departure-prop", "visual-salience"],
+          "critical": false
+        },
+        {
+          "id": "ev_05",
+          "text": "The coffee in the mug is still warm.",
+          "diagnostic_weight": 0.88,
+          "salience_level": 0.70,
+          "misdirection_risk": 0.10,
+          "salience_confidence": 0.85,
+          "bias_tags": ["timeline-anchor", "contradiction-anchor", "physical-evidence"],
+          "critical": true
+        },
+        {
+          "id": "ev_06",
+          "text": "Security footage has a twelve-minute gap.",
+          "diagnostic_weight": 0.85,
+          "salience_level": 0.60,
+          "misdirection_risk": 0.10,
+          "salience_confidence": 0.80,
+          "bias_tags": ["forensic-anchor", "timeline-anchor", "hidden-activity"],
+          "critical": true
+        },
+        {
+          "id": "ev_07",
+          "text": "No fingerprints are visible on the train ticket.",
+          "diagnostic_weight": 0.90,
+          "salience_level": 0.55,
+          "misdirection_risk": 0.15,
+          "salience_confidence": 0.85,
+          "bias_tags": ["absence-evidence", "erasure-signal", "contradiction-anchor"],
+          "critical": true
+        }
+      ],
+      "requires_all": ["STAGED_SCENE", "INTENTIONAL_ERASURE"],
+      "teaches": ["NARRATIVE_FABRICATION"],
+      "hidden_truth": "A second actor staged the scene to simulate a voluntary departure.",
+      "false_narrative": "The resident calmly left for travel.",
+      "contradictions": [
+        {
+          "fact_a_keywords": ["warm coffee", "still warm", "fresh coffee"],
+          "fact_b_keywords": ["left", "departed", "voluntarily", "travel", "gone"],
+          "description": "Warm coffee implies recent presence — conflicts with a planned departure."
+        },
+        {
+          "fact_a_keywords": ["no fingerprint", "no print", "fingerprint-free"],
+          "fact_b_keywords": ["ticket", "placed", "handled", "touched"],
+          "description": "A handled ticket should carry prints — their absence signals cleaning."
+        },
+        {
+          "fact_a_keywords": ["camera gap", "twelve-minute", "footage gap", "missing footage"],
+          "fact_b_keywords": ["organized", "calm", "neat", "undisturbed", "nothing unusual"],
+          "description": "A surveillance gap paired with a calm scene suggests hidden activity."
+        }
+      ],
+      "solution": {
+        "unlock_key": "NARRATIVE_FABRICATION",
+        "elimination_target": "left voluntarily",
+        "direct_answer_keywords": [
+          "staged departure", "fabricated departure",
+          "planted exit", "second actor"
+        ],
+        "must_reject_false_narrative": true,
+        "inference_traps": [
+          {
+            "description": "A visible train ticket does not by itself prove voluntary travel; planted travel evidence can be staged.",
+            "trap_keywords": ["ticket proves travel", "train ticket proves voluntary departure", "left voluntarily because of the ticket"],
+            "penalty": 1
+          },
+          {
+            "description": "Warm coffee conflicts with a calm planned departure; treating it as normal misses the timeline contradiction.",
+            "trap_keywords": ["warm coffee is irrelevant", "coffee does not matter", "planned departure despite warm coffee"],
+            "penalty": 1
+          }
+        ],
+        "required_concept_rules": [
+          {
+            "name": "Staged normality",
+            "description": "Recognizes that the orderly room may have been arranged.",
+            "concept_groups": [
+              ["staged", "arranged", "too neat", "constructed", "placed", "set up"],
+              ["scene", "room", "desk", "departure", "normal"]
+            ]
+          },
+          {
+            "name": "Forensic erasure",
+            "description": "The fingerprint-free ticket is treated as suspicious.",
+            "concept_groups": [
+              ["wipe", "clean", "erase", "remove", "planted"],
+              ["fingerprint", "print", "ticket", "trace"]
+            ]
+          },
+          {
+            "name": "Timeline contradiction",
+            "description": "Warm coffee and camera gap break the voluntary departure story.",
+            "concept_groups": [
+              ["warm", "coffee", "recent", "fresh", "timing"],
+              ["gap", "camera", "footage", "twelve", "missing time", "contradiction"]
+            ]
+          }
+        ],
+        "insight_usage_rules": [
+          {
+            "insight_key": "STAGED_SCENE",
+            "description": "Applied 'staged scene' reasoning from C001.",
+            "concept_groups": [
+              ["staged", "arranged", "curated", "constructed", "set up"],
+              ["scene", "room", "desk", "appearance"]
+            ]
+          },
+          {
+            "insight_key": "INTENTIONAL_ERASURE",
+            "description": "Applied 'intentional erasure' reasoning from C002.",
+            "concept_groups": [
+              ["wipe", "clean", "erase", "deliberate", "intentional"],
+              ["fingerprint", "trace", "print", "evidence"]
+            ]
+          }
+        ],
+        "forbidden_patterns": [
+          {
+            "description": "Accepting the voluntary departure narrative.",
+            "concept_groups": [
+              ["voluntarily", "chose to leave", "decided to go", "planned trip"],
+              ["left", "departed", "went", "travel"]
+            ],
+            "penalty": 2
+          },
+          {
+            "description": "Treating the fingerprint-free ticket as normal.",
+            "concept_groups": [
+              ["normal", "fine", "nothing wrong", "not suspicious"],
+              ["ticket", "fingerprint", "print"]
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

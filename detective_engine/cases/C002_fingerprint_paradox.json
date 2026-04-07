@@ -1,0 +1,143 @@
+{
+  "insights": [
+    {
+      "key": "INTENTIONAL_ERASURE",
+      "title": "Intentional Erasure",
+      "reasoning_type": "negative evidence interpretation",
+      "summary": "Missing traces can indicate deliberate removal rather than absence of contact.",
+      "transfer_rule": "Absence of evidence can itself be evidence when the context expects traces."
+    }
+  ],
+  "cases": [
+    {
+      "id": "C002",
+      "title": "The Fingerprint Paradox",
+      "category": "forensic",
+      "summary": "A frequently handled object has no fingerprints at all. The lack of trace is itself the puzzle.",
+      "evidence": [
+        "A frequently used metal object shows no visible fingerprints.",
+        "The object sits in a high-contact location.",
+        "There are no signs that the object was recently replaced.",
+        "The surrounding area appears normal."
+      ],
+      "detective_questions": [
+        "What should normally be present on such an object?",
+        "If a trace is absent, what mechanisms could explain that absence?",
+        "Does the absence point to neglect, replacement, or deliberate cleaning?"
+      ],
+      "analysis_protocol": [
+        "Record only what is present or absent in the evidence.",
+        "List multiple explanations for the missing trace.",
+        "Prefer the explanation that best fits expected baseline behavior."
+      ],
+      "requires_all": ["STAGED_SCENE"],
+      "teaches": ["INTENTIONAL_ERASURE"],
+      "evidence_meta": [
+        {
+          "id": "ev_01",
+          "text": "A frequently used metal object shows no visible fingerprints.",
+          "diagnostic_weight": 0.90,
+          "salience_level": 0.80,
+          "misdirection_risk": 0.75,
+          "salience_confidence": 0.85,
+          "bias_tags": ["absence-evidence", "inference-trap-target", "primary-puzzle"],
+          "critical": true
+        },
+        {
+          "id": "ev_02",
+          "text": "The object sits in a high-contact location.",
+          "diagnostic_weight": 0.85,
+          "salience_level": 0.35,
+          "misdirection_risk": 0.05,
+          "salience_confidence": 0.75,
+          "bias_tags": ["baseline-anchor", "quiet-anchor"],
+          "critical": true
+        },
+        {
+          "id": "ev_03",
+          "text": "There are no signs that the object was recently replaced.",
+          "diagnostic_weight": 0.80,
+          "salience_level": 0.30,
+          "misdirection_risk": 0.10,
+          "salience_confidence": 0.65,
+          "bias_tags": ["negative-evidence", "abstract-anchor", "elimination-clue"],
+          "critical": true
+        },
+        {
+          "id": "ev_04",
+          "text": "The surrounding area appears normal.",
+          "diagnostic_weight": 0.20,
+          "salience_level": 0.50,
+          "misdirection_risk": 0.45,
+          "salience_confidence": 0.70,
+          "bias_tags": ["false-calm", "false-narrative-anchor"],
+          "critical": false
+        }
+      ],
+      "hidden_truth": "The missing fingerprints most likely reflect intentional removal.",
+      "false_narrative": "No prints means no one touched the object.",
+      "contradictions": [
+        {
+          "fact_a_keywords": ["frequently used", "high-contact", "daily", "regular"],
+          "fact_b_keywords": ["no fingerprint", "no print", "no visible", "no trace"],
+          "description": "Frequent use should leave prints, yet none exist."
+        }
+      ],
+      "solution": {
+        "unlock_key": "INTENTIONAL_ERASURE",
+        "elimination_target": "no one touched",
+        "direct_answer_keywords": [
+          "wiped prints", "cleaned surface",
+          "intentional erasure", "deliberately wiped"
+        ],
+        "must_reject_false_narrative": true,
+        "inference_traps": [
+          {
+            "description": "No fingerprints does not mean no one touched the object; expected traces may have been removed.",
+            "trap_keywords": ["no one touched", "nobody touched", "never handled", "absence of prints means no contact"],
+            "penalty": 1
+          },
+          {
+            "description": "Natural fading is a weak explanation for a frequently handled high-contact object with no replacement signs.",
+            "trap_keywords": ["prints faded naturally", "time removed the prints", "weather removed the prints", "wore off naturally"],
+            "penalty": 1
+          }
+        ],
+        "required_concept_rules": [
+          {
+            "name": "Expected baseline",
+            "description": "Notes that a frequently used object should carry prints.",
+            "concept_groups": [
+              ["frequently", "regularly", "often", "commonly", "daily", "high-contact"],
+              ["should", "expect", "normally", "usually", "would have", "baseline"]
+            ]
+          },
+          {
+            "name": "Negative evidence as signal",
+            "description": "Treats absence of trace as active signal, not neutral silence.",
+            "concept_groups": [
+              ["wipe", "clean", "remove", "erase", "deliberate"],
+              ["fingerprint", "trace", "print", "mark"]
+            ]
+          }
+        ],
+        "forbidden_patterns": [
+          {
+            "description": "Attributing missing prints to natural decay.",
+            "concept_groups": [
+              ["fade", "natural", "weather", "time", "age", "wore off"],
+              ["fingerprint", "print", "trace"]
+            ]
+          },
+          {
+            "description": "Assuming absence of prints means no contact occurred.",
+            "concept_groups": [
+              ["no one", "nobody", "never"],
+              ["touch", "contact", "use", "handle"]
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
