@@ -1,7 +1,21 @@
 
 # 🕵️ Detective Conan Reasoning Engine
 
-A research-grade reasoning evaluation system for detective-style reasoning tasks. This public repository contains the core engine, test harness, and documentation for research and educational use.
+![MIT License](https://img.shields.io/badge/license-MIT-green.svg)
+![Build](https://img.shields.io/badge/build-passing-brightgreen)
+![Python](https://img.shields.io/badge/python-3.8%2B-blue)
+![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-orange)
+
+A research-grade reasoning evaluation engine for detective-style logic and AI tasks. This public repository contains the core engine, test harness, and documentation for research and educational use.
+
+**Quick Links:**
+- [Getting Started](#-quick-start)
+- [Documentation](#-documentation)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+---
+
 
 
 ## 📁 Repository Structure
@@ -49,15 +63,18 @@ A research-grade reasoning evaluation system for detective-style reasoning tasks
 │   └── test_perception.py
 ```
 
+
 > **Note:**
-> - Some files and folders referenced in earlier versions (such as 500+ detective cases, automation scripts, and full training datasets) are not included in this public repository. These were internal or generated assets and are intentionally omitted for privacy, licensing, or size reasons.
-> - The `.gitignore` excludes local development files, virtual environments, Jupyter notebooks, and other non-essential or large files. Only the core engine, tests, and documentation are included here.
+> - This public repo includes only the core engine, tests, and documentation. No private/internal datasets, automation scripts, or large generated assets are included.
+> - The `.gitignore` excludes local development files, virtual environments, Jupyter notebooks, and other non-essential or large files.
 
 ---
 
 
 
+
 ## 🚀 Quick Start
+
 
 ### 1. Run the Engine
 
@@ -76,6 +93,7 @@ python3 -m unittest discover tests
 
 
 
+
 ## 📚 Documentation
 
 - **README.md** (this file) - Project overview
@@ -85,23 +103,27 @@ python3 -m unittest discover tests
 - **docs/TRAINING_PLAN.md** - Training plan (for reference)
 - **docs/V11_V12_IMPLEMENTATION_SPEC.md** - Implementation specification
 
+
 > Note: Only files listed above are present in the public repository. No large datasets, automation scripts, or private/internal data are included.
 
 ---
 
+
 ## 🎭 Templates (Public)
 
-The public repository includes only the template framework and documentation. No actual case data, generated cases, or training data are included.
+This repository includes only the template framework and documentation. No actual case data, generated cases, or training data are included.
 
 See `docs/TEMPLATE_GUIDE.md` for template structure and usage.
 
 ---
 
+
 ## 🤝 Contributing
 
-See `CONTRIBUTING.md` for contribution guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
 ---
+
 
 ## 📞 Support
 
@@ -109,8 +131,11 @@ For help, see the `docs/` folder or open a GitHub issue.
 
 ---
 
-**Status**: Public engine and template framework only. No case data or training data included.
 
-**Last Updated**: 2026
+---
 
-**Version**: 1.0.0
+**Status:** Public engine and template framework only. No case data or training data included.
+
+**Last Updated:** 2026
+
+**Version:** 1.0.0
