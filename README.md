@@ -18,12 +18,7 @@ Conan/
 │
 ├── docs/                      # Documentation (public)
 │   ├── PROJECT_COMPLETE.md
-│   ├── TRAINING_PLAN.md
-│   ├── GENERATION_PLAN.md
 │   ├── TEMPLATE_GUIDE.md
-│   ├── QUALITY_COMPARISON.md
-│   ├── METADATA_ANALYSIS.md
-│   ├── DELIVERY_SUMMARY.md
 │   └── README_GENERATION.md
 │
 ├── main.py                    # Interactive case testing
@@ -55,16 +50,15 @@ python3 -m unittest discover tests
 ---
 
 
+
 ## 📚 Documentation
 
 - **README.md** (this file) - Project overview
 - **docs/PROJECT_COMPLETE.md** - Completion summary
 - **docs/README_GENERATION.md** - Quick generation guide
-- **docs/GENERATION_PLAN.md** - Generation strategy
 - **docs/TEMPLATE_GUIDE.md** - Template usage
-- **docs/QUALITY_COMPARISON.md** - Quality analysis
-- **docs/TRAINING_PLAN.md** - Training guide (for reference only)
-- **docs/METADATA_ANALYSIS.md** - Evidence metadata analysis
+
+> Note: Additional internal documentation exists in the docs/ folder but is not listed here, as it contains internal or archival information not relevant to the public release.
 
 ---
 
