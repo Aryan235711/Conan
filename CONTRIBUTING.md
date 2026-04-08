@@ -3,7 +3,7 @@
 
 Thank you for your interest in contributing! This project welcomes contributions from the community. Please help us improve the public codebase and documentation.
 
-## 🎯 Ways to Contribute
+## Ways to Contribute
 
 - Improve or refactor code
 - Add new features
@@ -13,7 +13,7 @@ Thank you for your interest in contributing! This project welcomes contributions
 - Add more cases with proper format
 
 
-## 📝 Contribution Process
+## Contribution Process
 
 
 1. Fork the repository and clone it locally.
@@ -25,7 +25,7 @@ Thank you for your interest in contributing! This project welcomes contributions
 7. Open a Pull Request on GitHub, describing your changes and referencing any related issues.
 
 
-## 🎨 Code Style
+## Code Style
 
 ### Python
 - Follow PEP 8
@@ -40,7 +40,7 @@ Thank you for your interest in contributing! This project welcomes contributions
 - Keep it concise
 
 
-## 🧪 Testing
+## Testing
 
 Before submitting your contribution:
 - Ensure your code runs without errors
@@ -50,7 +50,7 @@ Before submitting your contribution:
 
 
 
-## 🐛 Bug Reports
+## Bug Reports
 
 If you find a bug, please open a GitHub Issue and provide:
 - Your operating system and Python version
@@ -58,7 +58,7 @@ If you find a bug, please open a GitHub Issue and provide:
 - Any error messages or unexpected behavior
 
 
-## 💡 Feature Requests
+## Feature Requests
 
 To suggest a new feature, open a GitHub Issue and include:
 - A clear description of the feature
@@ -66,19 +66,19 @@ To suggest a new feature, open a GitHub Issue and include:
 - Examples if possible
 
 
-## 📞 Questions?
+## Questions?
 
 If you have questions, open a GitHub Issue and tag it as a question. We'll respond as soon as possible.
 
 
-## 🏆 Recognition
+## Recognition
 
 Contributors will be:
 - Listed in README.md
 - Mentioned in release notes
 
 
-## 📜 Code of Conduct
+## Code of Conduct
 
 ### Our Standards
 - Be respectful and inclusive
@@ -93,10 +93,10 @@ Contributors will be:
 - Publishing private information
 
 
-## 📄 License
+## License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.
 
 ---
 
-Thank you for contributing! 🎉
+Thank you for contributing! 
