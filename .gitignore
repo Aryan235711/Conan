@@ -98,3 +98,7 @@ prepare_public_release.sh
 
 # OS
 Thumbs.db
+
+# Internal planning docs (local only)
+FINAL_STRATEGY.md
+ORGANIZATION_COMPLETE.md
