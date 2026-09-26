@@ -30,6 +30,11 @@
         "List multiple explanations for the missing trace.",
         "Prefer the explanation that best fits expected baseline behavior."
       ],
+      "scenarios": [
+        "Routine cleaning removed the prints.",
+        "Someone wiped the object to remove their prints.",
+        "No one has touched the object."
+      ],
       "requires_all": ["STAGED_SCENE"],
       "teaches": ["INTENTIONAL_ERASURE"],
       "evidence_meta": [

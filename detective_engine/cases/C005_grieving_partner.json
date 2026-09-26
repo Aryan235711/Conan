@@ -6,6 +6,13 @@
       "reasoning_type": "behavioral contradiction analysis",
       "summary": "People who lie often over-explain, volunteer unnecessary details, or exhibit behavior inconsistent with their claimed emotional state.",
       "transfer_rule": "When behavior contradicts stated emotion or motive, the behavior is more reliable than the words."
+    },
+    {
+      "key": "EVIDENCE_FILTERING",
+      "title": "Evidence Filtering",
+      "reasoning_type": "diagnostic value assessment",
+      "summary": "Some clues are vivid but carry no diagnostic value; they were planted, pre-existing, or explained by routine.",
+      "transfer_rule": "Before a clue shapes your hypothesis, ask whether it discriminates between explanations or merely draws attention."
     }
   ],
   "cases": [
@@ -50,7 +57,7 @@
         "An unknown third party abducted the spouse."
       ],
       "requires_all": ["NARRATIVE_FABRICATION", "TIMELINE_RECONSTRUCTION"],
-      "teaches": ["DECEPTION_DETECTION"],
+      "teaches": ["DECEPTION_DETECTION", "EVIDENCE_FILTERING"],
       "evidence_meta": [
         {
           "id": "ev_01",

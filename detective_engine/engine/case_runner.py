@@ -489,15 +489,19 @@ class CaseRunner:
 
         # ── Unlock ──
         if ev.passed:
-            key = case.solution.unlock_key
-            if key and key in self.graph.insights:
-                newly = self.graph.unlock(key)
-                ins = self.graph.insights[key]
-                print(f"\n🔓 Insight unlocked: {ins.key} — {ins.title}")
-                print(f"   Transfer rule: {ins.transfer_rule}")
-                for ncid in newly:
-                    nc = self.graph.cases[ncid]
-                    print(f"   🔓 Case {ncid}: {nc.title} is now UNLOCKED")
+            # Unlock the solution key plus every insight the case teaches, so a
+            # case can feed more than one downstream dependency.
+            keys = [case.solution.unlock_key] + list(case.teaches)
+            keys = [k for k in dict.fromkeys(keys) if k and k in self.graph.insights]
+            if keys:
+                for key in keys:
+                    newly = self.graph.unlock(key)
+                    ins = self.graph.insights[key]
+                    print(f"\n🔓 Insight unlocked: {ins.key} — {ins.title}")
+                    print(f"   Transfer rule: {ins.transfer_rule}")
+                    for ncid in newly:
+                        nc = self.graph.cases[ncid]
+                        print(f"   🔓 Case {ncid}: {nc.title} is now UNLOCKED")
             else:
                 print("\n✅ Case solved.")
         elif ev.grade == "C":
