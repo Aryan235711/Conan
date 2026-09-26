@@ -102,3 +102,7 @@ Thumbs.db
 # Internal planning docs (local only)
 FINAL_STRATEGY.md
 ORGANIZATION_COMPLETE.md
+
+# Generated v2 datasets (reproducible: python3 -m detective_engine.generator)
+data/generated/
+runs/
