@@ -23,6 +23,7 @@ from detective_engine.engine.bayesian_validator import BayesianValidator, Bayesi
 from detective_engine.engine.causality_validator import CausalityValidator, CausalityResult
 from detective_engine.engine.user_profile import UserProfile, SkillProfile
 from detective_engine.engine.validator import Validator
+from detective_engine.engine.reward_interface import RewardScorer
 
 __all__ = [
     "AnalysisRecord",
@@ -52,5 +53,6 @@ __all__ = [
     "ReasoningGraphValidator",
     "SkillProfile",
     "UserProfile",
+    "RewardScorer",
     "Validator",
 ]
