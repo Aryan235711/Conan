@@ -80,10 +80,11 @@ POOLS: dict[str, dict[str, list[str]]] = {
     },
 }
 
+# partial_trap: chance that a partial-coverage alibi is among the non-clearing whereabouts options.
 DIFFICULTY: dict[int, dict[str, Any]] = {
-    1: {"suspects": 3, "herrings": (1, 1), "accident": False, "partial_trap": False, "margin": (40, 90), "testimony_noise": 0},
-    2: {"suspects": 4, "herrings": (2, 2), "accident": True, "partial_trap": False, "margin": (10, 60), "testimony_noise": 1},
-    3: {"suspects": 5, "herrings": (3, 4), "accident": True, "partial_trap": True, "margin": (5, 40), "testimony_noise": 2},
+    1: {"suspects": 3, "herrings": (1, 1), "accident": False, "partial_trap": 0.0, "margin": (40, 90)},
+    2: {"suspects": 4, "herrings": (1, 2), "accident": True, "partial_trap": 0.5, "margin": (10, 60)},
+    3: {"suspects": 5, "herrings": (2, 3), "accident": True, "partial_trap": 0.5, "margin": (5, 40)},
 }
 
 BODY_TEMP = 37.0
@@ -196,40 +197,64 @@ def simulate(rng: random.Random, level: int, pool_name: str) -> dict[str, Any] |
 
     lo, hi = death_window(facts)
 
+    # Every suspect is named exactly three times (key sentence, whereabouts,
+    # motive) so mention frequency carries no signal about guilt.
+
     # Access: culprit is always a keyholder; some distractors are excluded by access.
     n_access_excluded = rng.randint(1, max(1, len(distractors) // 2))
     access_excluded = set(rng.sample(distractors, n_access_excluded))
-    keyholders = sorted([s for s in suspects if s not in access_excluded])
+    keyholders = [s for s in suspects if s not in access_excluded]
+    rng.shuffle(keyholders)
+    no_key = [s for s in suspects if s in access_excluded]
+    rng.shuffle(no_key)
     facts.append(Fact("no_forced_entry",
                       f"There was no sign of forced entry; the {place} door had been locked and unlocked with a key.",
                       {}, "hard"))
-    names = ", ".join([victim] + keyholders[:-1]) + (f" and {keyholders[-1]}" if keyholders else "")
-    facts.append(Fact("keyholders", f"Keys to the {place} are held only by {names}.", {"names": keyholders}, "hard"))
+    holders = ", ".join([victim] + keyholders[:-1]) + f" and {keyholders[-1]}"
+    others = " and ".join(no_key) if len(no_key) <= 2 else ", ".join(no_key[:-1]) + f" and {no_key[-1]}"
+    facts.append(Fact("keyholders",
+                      f"Keys to the {place} are held only by {holders}; {others} never had one.",
+                      {"names": sorted(keyholders)}, "hard"))
 
-    # Alibis: every keyholding distractor gets a verified alibi covering the window.
+    # Whereabouts: one line per suspect.
     lo_m, hi_m = cfg["margin"]
-    for s in distractors:
-        if s in access_excluded:
-            continue
-        a, b = lo - rng.randint(lo_m, hi_m), hi + rng.randint(lo_m, hi_m)
-        p = rng.choice(pool["alibi_place"])
-        src = rng.choice(pool["source"]).format(p=p, s=s)
-        facts.append(Fact("alibi", f"{src} from {fmt(a)} to {fmt(b)}.", {"name": s, "start": a, "end": b}, "hard"))
 
-    # Culprit: a lying testimony, or (trap) a verified alibi that stops inside the window.
-    p = rng.choice(pool["alibi_place"])
-    if cfg["partial_trap"] and hi - lo >= 60:
-        end = rng.randint(lo + 10, hi - 30)
-        start = end - rng.randint(60, 150)
-        src = rng.choice(pool["source"]).format(p=p, s=culprit)
-        facts.append(Fact("alibi", f"{src} from {fmt(start)} to {fmt(end)}.",
-                          {"name": culprit, "start": start, "end": end}, "neutral"))
-    else:
-        facts.append(Fact("testimony", f"{culprit} says they were at {p} all evening.", {"name": culprit}, "neutral"))
+    def verified(s: str, a: int, b: int, role: str) -> Fact:
+        src = rng.choice(pool["source"]).format(p=rng.choice(pool["alibi_place"]), s=s)
+        return Fact("alibi", f"{src} from {fmt(a)} to {fmt(b)}.", {"name": s, "start": a, "end": b}, role)
 
-    # Testimony noise from access-excluded distractors (true but unverifiable).
-    for s in rng.sample(sorted(access_excluded), min(cfg["testimony_noise"], len(access_excluded))):
-        facts.append(Fact("testimony", f"{s} says they were at home that night.", {"name": s}, "neutral"))
+    def testimony(s: str) -> Fact:
+        where = rng.choice(pool["alibi_place"] + ["home"])
+        return Fact("testimony", f"{s} says they were at {where} all evening.", {"name": s}, "neutral")
+
+    def partial(s: str) -> Fact | None:
+        if hi - lo < 60:
+            return None
+        if rng.random() < 0.5:                       # verified alibi that ends inside the window
+            end = rng.randint(lo + 10, hi - 30)
+            return verified(s, end - rng.randint(60, 150), end, "neutral")
+        start = rng.randint(lo + 30, hi - 10)        # ... or starts inside it
+        return verified(s, start, start + rng.randint(60, 150), "neutral")
+
+    def early(s: str) -> Fact:                        # verified, but over before the window opens
+        end = lo - rng.randint(20, 120)
+        return verified(s, end - rng.randint(60, 180), end, "neutral")
+
+    def non_clearing(s: str) -> Fact:
+        """Whereabouts that do not clear anyone.  The culprit and key-less
+        suspects draw from the same mix, so the form of the line carries no
+        signal; only its timing does."""
+        options = ["testimony", "early"] + (["partial"] if rng.random() < cfg["partial_trap"] else [])
+        pick = rng.choice(options)
+        if pick == "partial":
+            return partial(s) or testimony(s)
+        return early(s) if pick == "early" else testimony(s)
+
+    for s in suspects:
+        if s == culprit or s in access_excluded:
+            facts.append(non_clearing(s))
+        else:                                         # keyholder: needs a verified alibi covering the window
+            facts.append(verified(s, lo - rng.randint(lo_m, hi_m), hi + rng.randint(lo_m, hi_m), "hard"))
 
     # Accident scenario and the clue that rules it out.
     if cfg["accident"]:
@@ -238,20 +263,16 @@ def simulate(rng: random.Random, level: int, pool_name: str) -> dict[str, Any] |
             "The post-mortem finds bruising on both wrists consistent with a struggle.",
         ]), {}, "hard"))
 
-    # Red herrings: motives for excluded suspects plus salient noise.
-    k = rng.randint(*cfg["herrings"])
-    herrings: list[Fact] = []
-    for s in rng.sample(distractors, min(len(distractors), max(1, k // 2))):
-        herrings.append(Fact("motive", f"{s}, the {roles[s]}, " + rng.choice(pool["motive"]).format(v=victim) + ".",
-                             {"name": s}, "herring"))
-    salient = rng.sample(pool["salient"], min(len(pool["salient"]), k - len(herrings))) if k > len(herrings) else []
-    for text in salient:
-        herrings.append(Fact("salient", text.format(t=fmt(rng.randint(lo - 60, hi))), {}, "herring"))
-    facts.extend(herrings)
+    # Motives: everyone has one.  Only the culprit's is not a red herring,
+    # and it is not decisive either, so it is neutral.
+    for s in suspects:
+        text = f"{s}, the {roles[s]}, " + rng.choice(pool["motive"]).format(v=victim) + "."
+        facts.append(Fact("motive", text, {"name": s}, "neutral" if s == culprit else "herring"))
 
-    # The culprit's own motive is real but not discriminating: neutral.
-    facts.append(Fact("motive", f"{culprit}, the {roles[culprit]}, " + rng.choice(pool["motive"]).format(v=victim) + ".",
-                      {"name": culprit}, "neutral"))
+    # Salient noise.
+    k = rng.randint(*cfg["herrings"])
+    for text in rng.sample(pool["salient"], min(k, len(pool["salient"]))):
+        facts.append(Fact("salient", text.format(t=fmt(rng.randint(lo - 60, hi))), {}, "herring"))
 
     return {
         "victim": victim, "suspects": suspects, "roles": roles, "place": place, "culprit": culprit,

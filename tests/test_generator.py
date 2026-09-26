@@ -115,7 +115,24 @@ perfect = {"most_likely": k.true_scenario,
            "time_window": {"earliest": k.time_window.earliest, "latest": k.time_window.latest}}
 check("a perfect answer to a generated case scores ~1", score_answer(c0, perfect).reward > 0.99)
 
-print("\n=== GEN-05: OOD split uses held-out vocabulary ===")
+print("\n=== GEN-05: No surface shortcut to the answer ===")
+leak_cases = generate(400, seed=21, levels=(1, 2, 3), pool="A")
+hits, chance = 0, 0.0
+for c in leak_cases:
+    counts = []
+    for s in c["scenarios"]:
+        name = s.split(",")[0].strip()
+        counts.append(sum(name in e for e in c["evidence"]) if " " in name and "accident" not in s else -1)
+    guess = counts.index(max(counts))
+    hits += guess == int(c["answer_key"]["true_scenario"][1:]) - 1
+    chance += 1 / len(c["scenarios"])
+acc, chance = hits / len(leak_cases), chance / len(leak_cases)
+check(f"most-mentioned suspect is near chance ({acc:.2f} vs {chance:.2f})", acc < chance + 0.08)
+mention_sets = [{sum(n in e for e in c["evidence"]) for n in
+                 [s.split(",")[0] for s in c["scenarios"] if "accident" not in s]} for c in leak_cases[:50]]
+check("every suspect is named equally often", all(len(m) == 1 for m in mention_sets))
+
+print("\n=== GEN-06: OOD split uses held-out vocabulary ===")
 ood_names = set(POOLS["B"]["first"]) | set(POOLS["B"]["last"])
 id_names = set(POOLS["A"]["first"]) | set(POOLS["A"]["last"])
 check("pools A and B share no names", not (ood_names & id_names), str(ood_names & id_names))
