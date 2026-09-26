@@ -18,4 +18,4 @@ keywords:
   - structured-reasoning
 license: MIT
 abstract: >
-  A research-grade reasoning evaluation engine for structured reasoning and deception detection in language models. This public release includes only the core engine, evaluation framework, and documentation. No datasets, templates, or training data are included.
+  An experimental reasoning evaluation engine for structured reasoning and deception detection in language models. This public release includes only the core engine, evaluation framework, and documentation. No datasets, templates, or training data are included.

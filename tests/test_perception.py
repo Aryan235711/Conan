@@ -43,7 +43,20 @@ all_cases, _ = loader.load_all()
 cases_by_id = {c.id: c for c in all_cases}
 
 
+import json as _json
+from pathlib import Path as _Path
+
+# These are unit tests of the perception logic, so they use a frozen copy of
+# the evidence metadata they were written against.  Editing case content must
+# not silently change what these scenarios test.
+_FIXTURE = _json.loads(
+    (_Path(__file__).resolve().parent / "fixtures" / "perception_evidence_meta.json").read_text()
+)["cases"]
+
+
 def emap(case_id: str) -> dict[str, EvidenceMeta]:
+    if case_id in _FIXTURE:
+        return {m["id"]: EvidenceMeta.from_dict(m) for m in _FIXTURE[case_id]}
     return getattr(cases_by_id[case_id], "evidence_map", {})
 
 

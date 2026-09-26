@@ -18,7 +18,10 @@
         "A frequently used metal object shows no visible fingerprints.",
         "The object sits in a high-contact location.",
         "There are no signs that the object was recently replaced.",
-        "The surrounding area appears normal."
+        "The surrounding area appears normal.",
+        "The cleaning log shows the area was last cleaned four days ago.",
+        "An identical handle on the neighbouring door is covered in ordinary smudges.",
+        "A faint streak of cloth fibres runs along the object's surface."
       ],
       "detective_questions": [
         "What should normally be present on such an object?",
@@ -35,17 +38,25 @@
         "Someone wiped the object to remove their prints.",
         "No one has touched the object."
       ],
-      "requires_all": ["STAGED_SCENE"],
-      "teaches": ["INTENTIONAL_ERASURE"],
+      "requires_all": [
+        "STAGED_SCENE"
+      ],
+      "teaches": [
+        "INTENTIONAL_ERASURE"
+      ],
       "evidence_meta": [
         {
           "id": "ev_01",
           "text": "A frequently used metal object shows no visible fingerprints.",
-          "diagnostic_weight": 0.90,
-          "salience_level": 0.80,
+          "diagnostic_weight": 0.9,
+          "salience_level": 0.8,
           "misdirection_risk": 0.75,
           "salience_confidence": 0.85,
-          "bias_tags": ["absence-evidence", "inference-trap-target", "primary-puzzle"],
+          "bias_tags": [
+            "absence-evidence",
+            "inference-trap-target",
+            "primary-puzzle"
+          ],
           "critical": true
         },
         {
@@ -55,36 +66,93 @@
           "salience_level": 0.35,
           "misdirection_risk": 0.05,
           "salience_confidence": 0.75,
-          "bias_tags": ["baseline-anchor", "quiet-anchor"],
+          "bias_tags": [
+            "baseline-anchor",
+            "quiet-anchor"
+          ],
           "critical": true
         },
         {
           "id": "ev_03",
           "text": "There are no signs that the object was recently replaced.",
-          "diagnostic_weight": 0.80,
-          "salience_level": 0.30,
-          "misdirection_risk": 0.10,
+          "diagnostic_weight": 0.8,
+          "salience_level": 0.3,
+          "misdirection_risk": 0.1,
           "salience_confidence": 0.65,
-          "bias_tags": ["negative-evidence", "abstract-anchor", "elimination-clue"],
+          "bias_tags": [
+            "negative-evidence",
+            "abstract-anchor",
+            "elimination-clue"
+          ],
           "critical": true
         },
         {
           "id": "ev_04",
           "text": "The surrounding area appears normal.",
-          "diagnostic_weight": 0.20,
-          "salience_level": 0.50,
+          "diagnostic_weight": 0.2,
+          "salience_level": 0.5,
           "misdirection_risk": 0.45,
-          "salience_confidence": 0.70,
-          "bias_tags": ["false-calm", "false-narrative-anchor"],
+          "salience_confidence": 0.7,
+          "bias_tags": [
+            "false-calm",
+            "false-narrative-anchor"
+          ],
           "critical": false
+        },
+        {
+          "id": "ev_05",
+          "text": "The cleaning log shows the area was last cleaned four days ago.",
+          "diagnostic_weight": 0.8,
+          "salience_level": 0.3,
+          "misdirection_risk": 0.05,
+          "salience_confidence": 0.8,
+          "bias_tags": [
+            "quiet-anchor",
+            "rules-out-cleaning"
+          ],
+          "critical": true
+        },
+        {
+          "id": "ev_06",
+          "text": "An identical handle on the neighbouring door is covered in ordinary smudges.",
+          "diagnostic_weight": 0.85,
+          "salience_level": 0.4,
+          "misdirection_risk": 0.05,
+          "salience_confidence": 0.8,
+          "bias_tags": [
+            "baseline-comparison"
+          ],
+          "critical": true
+        },
+        {
+          "id": "ev_07",
+          "text": "A faint streak of cloth fibres runs along the object's surface.",
+          "diagnostic_weight": 0.8,
+          "salience_level": 0.3,
+          "misdirection_risk": 0.05,
+          "salience_confidence": 0.75,
+          "bias_tags": [
+            "trace-of-removal"
+          ],
+          "critical": true
         }
       ],
-      "hidden_truth": "The missing fingerprints most likely reflect intentional removal.",
+      "hidden_truth": "Someone deliberately wiped the object. Routine cleaning is ruled out by the four-day-old log and the smudged neighbouring handle, and the cloth fibres show a recent wipe.",
       "false_narrative": "No prints means no one touched the object.",
       "contradictions": [
         {
-          "fact_a_keywords": ["frequently used", "high-contact", "daily", "regular"],
-          "fact_b_keywords": ["no fingerprint", "no print", "no visible", "no trace"],
+          "fact_a_keywords": [
+            "frequently used",
+            "high-contact",
+            "daily",
+            "regular"
+          ],
+          "fact_b_keywords": [
+            "no fingerprint",
+            "no print",
+            "no visible",
+            "no trace"
+          ],
           "description": "Frequent use should leave prints, yet none exist."
         }
       ],
@@ -92,19 +160,31 @@
         "unlock_key": "INTENTIONAL_ERASURE",
         "elimination_target": "no one touched",
         "direct_answer_keywords": [
-          "wiped prints", "cleaned surface",
-          "intentional erasure", "deliberately wiped"
+          "wiped prints",
+          "cleaned surface",
+          "intentional erasure",
+          "deliberately wiped"
         ],
         "must_reject_false_narrative": true,
         "inference_traps": [
           {
             "description": "No fingerprints does not mean no one touched the object; expected traces may have been removed.",
-            "trap_keywords": ["no one touched", "nobody touched", "never handled", "absence of prints means no contact"],
+            "trap_keywords": [
+              "no one touched",
+              "nobody touched",
+              "never handled",
+              "absence of prints means no contact"
+            ],
             "penalty": 1
           },
           {
             "description": "Natural fading is a weak explanation for a frequently handled high-contact object with no replacement signs.",
-            "trap_keywords": ["prints faded naturally", "time removed the prints", "weather removed the prints", "wore off naturally"],
+            "trap_keywords": [
+              "prints faded naturally",
+              "time removed the prints",
+              "weather removed the prints",
+              "wore off naturally"
+            ],
             "penalty": 1
           }
         ],
@@ -113,16 +193,41 @@
             "name": "Expected baseline",
             "description": "Notes that a frequently used object should carry prints.",
             "concept_groups": [
-              ["frequently", "regularly", "often", "commonly", "daily", "high-contact"],
-              ["should", "expect", "normally", "usually", "would have", "baseline"]
+              [
+                "frequently",
+                "regularly",
+                "often",
+                "commonly",
+                "daily",
+                "high-contact"
+              ],
+              [
+                "should",
+                "expect",
+                "normally",
+                "usually",
+                "would have",
+                "baseline"
+              ]
             ]
           },
           {
             "name": "Negative evidence as signal",
             "description": "Treats absence of trace as active signal, not neutral silence.",
             "concept_groups": [
-              ["wipe", "clean", "remove", "erase", "deliberate"],
-              ["fingerprint", "trace", "print", "mark"]
+              [
+                "wipe",
+                "clean",
+                "remove",
+                "erase",
+                "deliberate"
+              ],
+              [
+                "fingerprint",
+                "trace",
+                "print",
+                "mark"
+              ]
             ]
           }
         ],
@@ -130,17 +235,54 @@
           {
             "description": "Attributing missing prints to natural decay.",
             "concept_groups": [
-              ["fade", "natural", "weather", "time", "age", "wore off"],
-              ["fingerprint", "print", "trace"]
+              [
+                "fade",
+                "natural",
+                "weather",
+                "time",
+                "age",
+                "wore off"
+              ],
+              [
+                "fingerprint",
+                "print",
+                "trace"
+              ]
             ]
           },
           {
             "description": "Assuming absence of prints means no contact occurred.",
             "concept_groups": [
-              ["no one", "nobody", "never"],
-              ["touch", "contact", "use", "handle"]
+              [
+                "no one",
+                "nobody",
+                "never"
+              ],
+              [
+                "touch",
+                "contact",
+                "use",
+                "handle"
+              ]
             ]
           }
+        ]
+      },
+      "answer_key": {
+        "true_scenario": "S2",
+        "ruled_out": [
+          "S1",
+          "S3"
+        ],
+        "key_evidence": [
+          "E1",
+          "E2",
+          "E5",
+          "E6",
+          "E7"
+        ],
+        "red_herrings": [
+          "E4"
         ]
       }
     }

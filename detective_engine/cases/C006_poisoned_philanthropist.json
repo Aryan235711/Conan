@@ -59,69 +59,97 @@
           "text": "Victoria collapsed at 22:15 after drinking champagne throughout the evening gala.",
           "diagnostic_weight": 0.15,
           "salience_level": 0.75,
-          "misdirection_risk": 0.10,
-          "salience_confidence": 0.80,
-          "bias_tags": ["scene-setter", "framing-context", "visual-salience"],
+          "misdirection_risk": 0.1,
+          "salience_confidence": 0.8,
+          "bias_tags": [
+            "scene-setter",
+            "framing-context",
+            "visual-salience"
+          ],
           "critical": false
         },
         {
           "id": "ev_02",
           "text": "Toxicology report: thallium sulfate, ingested 2–4 hours before symptom onset (between 18:15 and 20:15).",
-          "diagnostic_weight": 0.50,
-          "salience_level": 0.60,
-          "misdirection_risk": 0.10,
-          "salience_confidence": 0.80,
-          "bias_tags": ["framing-context", "timeline-anchor"],
+          "diagnostic_weight": 0.5,
+          "salience_level": 0.6,
+          "misdirection_risk": 0.1,
+          "salience_confidence": 0.8,
+          "bias_tags": [
+            "framing-context",
+            "timeline-anchor"
+          ],
           "critical": false
         },
         {
           "id": "ev_03",
           "text": "Marcus Reed, Victoria's business partner, holds a chemistry degree from Stanford.",
-          "diagnostic_weight": 0.10,
+          "diagnostic_weight": 0.1,
           "salience_level": 0.88,
-          "misdirection_risk": 0.90,
-          "salience_confidence": 0.90,
-          "bias_tags": ["primary-trap", "misdirection-anchor", "availability-heuristic", "red-herring"],
+          "misdirection_risk": 0.9,
+          "salience_confidence": 0.9,
+          "bias_tags": [
+            "primary-trap",
+            "misdirection-anchor",
+            "availability-heuristic",
+            "red-herring"
+          ],
           "critical": false
         },
         {
           "id": "ev_04",
           "text": "Marcus was seen near the champagne service table at approximately 19:30, briefly.",
           "diagnostic_weight": 0.15,
-          "salience_level": 0.70,
+          "salience_level": 0.7,
           "misdirection_risk": 0.75,
           "salience_confidence": 0.82,
-          "bias_tags": ["misdirection-anchor", "proximity-bias"],
+          "bias_tags": [
+            "misdirection-anchor",
+            "proximity-bias"
+          ],
           "critical": false
         },
         {
           "id": "ev_05",
           "text": "Marcus stands to inherit controlling shares of the company, worth approximately $200M.",
-          "diagnostic_weight": 0.20,
-          "salience_level": 0.90,
+          "diagnostic_weight": 0.2,
+          "salience_level": 0.9,
           "misdirection_risk": 0.85,
-          "salience_confidence": 0.90,
-          "bias_tags": ["primary-trap", "anchoring-bias", "magnitude-salience", "misdirection-anchor"],
+          "salience_confidence": 0.9,
+          "bias_tags": [
+            "primary-trap",
+            "anchoring-bias",
+            "magnitude-salience",
+            "misdirection-anchor"
+          ],
           "critical": false
         },
         {
           "id": "ev_06",
           "text": "However, Marcus and Victoria were about to close a joint venture worth $50M to Marcus personally — a deal that dies with Victoria.",
-          "diagnostic_weight": 0.80,
+          "diagnostic_weight": 0.8,
           "salience_level": 0.35,
           "misdirection_risk": 0.05,
-          "salience_confidence": 0.80,
-          "bias_tags": ["quiet-anchor", "counterfact", "motive-weakener", "key-evidence"],
+          "salience_confidence": 0.8,
+          "bias_tags": [
+            "quiet-anchor",
+            "counterfact",
+            "motive-weakener",
+            "key-evidence"
+          ],
           "critical": true
         },
         {
           "id": "ev_07",
           "text": "Elena Cruz, Victoria's personal assistant for 7 years, was demoted 6 weeks ago after a dispute over expenses.",
-          "diagnostic_weight": 0.40,
-          "salience_level": 0.50,
+          "diagnostic_weight": 0.4,
+          "salience_level": 0.5,
           "misdirection_risk": 0.15,
           "salience_confidence": 0.75,
-          "bias_tags": ["motive-indicator", "supporting-detail"],
+          "bias_tags": [
+            "motive-indicator",
+            "supporting-detail"
+          ],
           "critical": false
         },
         {
@@ -131,27 +159,39 @@
           "salience_level": 0.55,
           "misdirection_risk": 0.15,
           "salience_confidence": 0.75,
-          "bias_tags": ["motive-indicator", "supporting-detail"],
+          "bias_tags": [
+            "motive-indicator",
+            "supporting-detail"
+          ],
           "critical": false
         },
         {
           "id": "ev_09",
           "text": "Elena had exclusive access to Victoria's personal champagne glass throughout the evening — she managed Victoria's food and drink preferences.",
           "diagnostic_weight": 0.92,
-          "salience_level": 0.50,
+          "salience_level": 0.5,
           "misdirection_risk": 0.05,
           "salience_confidence": 0.88,
-          "bias_tags": ["key-evidence", "sustained-access", "physical-evidence", "quiet-anchor"],
+          "bias_tags": [
+            "key-evidence",
+            "sustained-access",
+            "physical-evidence",
+            "quiet-anchor"
+          ],
           "critical": true
         },
         {
           "id": "ev_10",
           "text": "Elena ordered 50g of potassium thallium sulfate online 3 weeks ago. Purchase confirmed in her order history.",
-          "diagnostic_weight": 0.90,
+          "diagnostic_weight": 0.9,
           "salience_level": 0.65,
-          "misdirection_risk": 0.10,
+          "misdirection_risk": 0.1,
           "salience_confidence": 0.88,
-          "bias_tags": ["physical-evidence", "premeditation-signal", "key-evidence"],
+          "bias_tags": [
+            "physical-evidence",
+            "premeditation-signal",
+            "key-evidence"
+          ],
           "critical": true
         },
         {
@@ -161,7 +201,10 @@
           "salience_level": 0.55,
           "misdirection_risk": 0.25,
           "salience_confidence": 0.78,
-          "bias_tags": ["testimony", "contradiction-setup"],
+          "bias_tags": [
+            "testimony",
+            "contradiction-setup"
+          ],
           "critical": false
         },
         {
@@ -171,75 +214,137 @@
           "salience_level": 0.35,
           "misdirection_risk": 0.05,
           "salience_confidence": 0.85,
-          "bias_tags": ["contradiction-anchor", "deception-signal", "quiet-anchor", "key-evidence"],
+          "bias_tags": [
+            "contradiction-anchor",
+            "deception-signal",
+            "quiet-anchor",
+            "key-evidence"
+          ],
           "critical": true
         },
         {
           "id": "ev_13",
           "text": "A person was seen near the kitchen around 20:00. Later confirmed to be regular catering staff.",
           "diagnostic_weight": 0.05,
-          "salience_level": 0.60,
-          "misdirection_risk": 0.80,
+          "salience_level": 0.6,
+          "misdirection_risk": 0.8,
           "salience_confidence": 0.85,
-          "bias_tags": ["false-clue", "distractor", "external-agent-bias"],
+          "bias_tags": [
+            "false-clue",
+            "distractor",
+            "external-agent-bias"
+          ],
           "critical": false
         },
         {
           "id": "ev_14",
           "text": "Victoria drank from a personal bottle of champagne — she was allergic to sulfite preservatives in standard champagne.",
           "diagnostic_weight": 0.45,
-          "salience_level": 0.40,
-          "misdirection_risk": 0.10,
+          "salience_level": 0.4,
+          "misdirection_risk": 0.1,
           "salience_confidence": 0.75,
-          "bias_tags": ["access-narrowing", "supporting-detail"],
+          "bias_tags": [
+            "access-narrowing",
+            "supporting-detail"
+          ],
           "critical": false
         },
         {
           "id": "ev_15",
           "text": "Forensic criminology reference: in 82% of thallium poisoning cases, the perpetrator had sustained, repeated access to the victim's food or drink.",
           "diagnostic_weight": 0.88,
-          "salience_level": 0.30,
+          "salience_level": 0.3,
           "misdirection_risk": 0.05,
           "salience_confidence": 0.82,
-          "bias_tags": ["base-rate-anchor", "bayesian-prior", "quiet-anchor", "key-evidence"],
+          "bias_tags": [
+            "base-rate-anchor",
+            "bayesian-prior",
+            "quiet-anchor",
+            "key-evidence"
+          ],
           "critical": true
         }
       ],
-      "requires_all": ["EVIDENCE_FILTERING", "DECEPTION_DETECTION"],
-      "teaches": ["PROBABILISTIC_INFERENCE"],
+      "requires_all": [
+        "EVIDENCE_FILTERING",
+        "DECEPTION_DETECTION"
+      ],
+      "teaches": [
+        "PROBABILISTIC_INFERENCE"
+      ],
       "hidden_truth": "Elena Cruz poisoned Victoria. She purchased thallium sulfate under the guise of rat poison (building records show no rats), had exclusive sustained access to Victoria's personal champagne glass throughout the gala, and the forensic base rate (82% sustained access) overwhelmingly favors her. Marcus's chemistry degree is a red herring — thallium sulfate is commercially available and requires no special knowledge. Marcus would also lose $50M by killing Victoria, making his motive contradictory.",
       "false_narrative": "Marcus Reed must be the poisoner because he has a chemistry degree, was seen near the champagne, and stands to inherit $200M.",
       "contradictions": [
         {
-          "fact_a_keywords": ["chemistry degree", "chemistry background", "stanford"],
-          "fact_b_keywords": ["commercially available", "no special knowledge", "anyone could", "bought online"],
+          "fact_a_keywords": [
+            "chemistry degree",
+            "chemistry background",
+            "stanford"
+          ],
+          "fact_b_keywords": [
+            "commercially available",
+            "no special knowledge",
+            "anyone could",
+            "bought online"
+          ],
           "description": "Marcus's chemistry degree seems incriminating, but thallium sulfate is commercially available — Elena bought it online with no chemistry training."
         },
         {
-          "fact_a_keywords": ["inherit", "$200M", "controlling shares", "inheritance"],
-          "fact_b_keywords": ["$50M", "joint venture", "deal dies", "loses deal"],
+          "fact_a_keywords": [
+            "inherit",
+            "$200M",
+            "controlling shares",
+            "inheritance"
+          ],
+          "fact_b_keywords": [
+            "$50M",
+            "joint venture",
+            "deal dies",
+            "loses deal"
+          ],
           "description": "Marcus gains $200M in shares but LOSES a $50M deal — his financial motive is contradictory."
         },
         {
-          "fact_a_keywords": ["rat", "rat problem", "rat poison"],
-          "fact_b_keywords": ["no rat complaints", "no complaints filed", "building management"],
+          "fact_a_keywords": [
+            "rat",
+            "rat problem",
+            "rat poison"
+          ],
+          "fact_b_keywords": [
+            "no rat complaints",
+            "no complaints filed",
+            "building management"
+          ],
           "description": "Elena's claim that the thallium was for rats is contradicted by building management records."
         }
       ],
       "solution": {
         "unlock_key": "PROBABILISTIC_INFERENCE",
         "elimination_target": "accidental",
-        "direct_answer_keywords": ["elena", "cruz", "assistant", "personal assistant"],
+        "direct_answer_keywords": [
+          "elena",
+          "cruz",
+          "assistant",
+          "personal assistant"
+        ],
         "must_reject_false_narrative": true,
         "inference_traps": [
           {
             "description": "Marcus's chemistry degree is flashy but not highly diagnostic because the poison was commercially available.",
-            "trap_keywords": ["marcus is guilty because of his chemistry degree", "chemistry degree proves marcus poisoned her", "stanford chemistry means marcus did it"],
+            "trap_keywords": [
+              "marcus is guilty because of his chemistry degree",
+              "chemistry degree proves marcus poisoned her",
+              "stanford chemistry means marcus did it"
+            ],
             "penalty": 1
           },
           {
             "description": "Brief proximity to the champagne table is weaker than Elena's sustained exclusive access to Victoria's drink.",
-            "trap_keywords": ["briefly near the table proves marcus did it", "19:30 table sighting is decisive", "marcus near champagne is enough proof"],
+            "trap_keywords": [
+              "briefly near the table proves marcus did it",
+              "19:30 table sighting is decisive",
+              "marcus near champagne is enough proof"
+            ],
             "penalty": 1
           }
         ],
@@ -248,8 +353,20 @@
             "name": "Sustained access reasoning",
             "description": "Recognizes that sustained/prolonged access to the victim's drink is the key differentiator",
             "concept_groups": [
-              ["sustained", "prolonged", "continuous", "exclusive", "repeated", "constant"],
-              ["access", "proximity", "contact", "opportunity"]
+              [
+                "sustained",
+                "prolonged",
+                "continuous",
+                "exclusive",
+                "repeated",
+                "constant"
+              ],
+              [
+                "access",
+                "proximity",
+                "contact",
+                "opportunity"
+              ]
             ],
             "points": 1
           },
@@ -257,7 +374,17 @@
             "name": "Evidence weighting awareness",
             "description": "Distinguishes diagnostic evidence from neutral or misleading evidence",
             "concept_groups": [
-              ["diagnostic", "strongest", "most important", "key evidence", "decisive", "critical", "weighs", "convincing", "compelling"]
+              [
+                "diagnostic",
+                "strongest",
+                "most important",
+                "key evidence",
+                "decisive",
+                "critical",
+                "weighs",
+                "convincing",
+                "compelling"
+              ]
             ],
             "points": 1
           }
@@ -266,9 +393,25 @@
           {
             "description": "Concluding Marcus is guilty solely because of his chemistry degree",
             "concept_groups": [
-              ["marcus", "reed", "partner"],
-              ["chemistry", "degree", "training", "knowledge"],
-              ["guilty", "must be", "clearly", "obviously", "proves", "poisoned"]
+              [
+                "marcus",
+                "reed",
+                "partner"
+              ],
+              [
+                "chemistry",
+                "degree",
+                "training",
+                "knowledge"
+              ],
+              [
+                "guilty",
+                "must be",
+                "clearly",
+                "obviously",
+                "proves",
+                "poisoned"
+              ]
             ],
             "penalty": 2
           }
@@ -278,7 +421,15 @@
             "insight_key": "EVIDENCE_FILTERING",
             "description": "Filters out the misleading evidence (catering staff sighting, chemistry degree red herring)",
             "concept_groups": [
-              ["misleading", "red herring", "irrelevant", "noise", "distraction", "false lead", "not diagnostic"]
+              [
+                "misleading",
+                "red herring",
+                "irrelevant",
+                "noise",
+                "distraction",
+                "false lead",
+                "not diagnostic"
+              ]
             ],
             "points": 1
           },
@@ -286,7 +437,15 @@
             "insight_key": "DECEPTION_DETECTION",
             "description": "Detects Elena's deceptive claim about rat poison",
             "concept_groups": [
-              ["lying", "lied", "deception", "false claim", "no rats", "fabricated", "cover story"]
+              [
+                "lying",
+                "lied",
+                "deception",
+                "false claim",
+                "no rats",
+                "fabricated",
+                "cover story"
+              ]
             ],
             "points": 1
           }
@@ -296,7 +455,7 @@
             {
               "id": "H1",
               "label": "Marcus Reed Business Partner",
-              "prior": 0.40,
+              "prior": 0.4,
               "posterior": 0.15,
               "key_supporting": [
                 "Chemistry degree from Stanford",
@@ -328,7 +487,7 @@
             {
               "id": "H3",
               "label": "Unknown Outsider",
-              "prior": 0.20,
+              "prior": 0.2,
               "posterior": 0.05,
               "key_supporting": [
                 "Person seen near kitchen at 20:00"
@@ -415,19 +574,55 @@
             "temporal": "The 2-4 hour administration window matches Elena's continuous access throughout the gala, not Marcus's single brief proximity at 19:30.",
             "convergence": "Five independent evidence lines converge on Elena: (1) sustained access, (2) chemical purchase, (3) deceptive cover story, (4) recent grudge/motive, (5) forensic base rate."
           },
-          "acceptable_posterior_range": [0.65, 0.85],
+          "acceptable_posterior_range": [
+            0.65,
+            0.85
+          ],
           "cognitive_traps": [
             {
               "name": "availability_heuristic",
               "description": "Marcus's Stanford chemistry degree FEELS damning but is irrelevant — thallium sulfate is commercially available online. Elena actually bought it.",
-              "penalty_keywords": ["chemistry degree proves", "must be marcus because chemistry", "marcus has the knowledge", "only a chemist could"]
+              "penalty_keywords": [
+                "chemistry degree proves",
+                "must be marcus because chemistry",
+                "marcus has the knowledge",
+                "only a chemist could"
+              ]
             },
             {
               "name": "anchoring_on_magnitude",
               "description": "The $200M inheritance is attention-grabbing, but Marcus would LOSE a $50M active deal. The net financial logic actually weakens his motive.",
-              "penalty_keywords": ["$200m proves motive", "inheritance makes it obvious", "200 million is enough motive"]
+              "penalty_keywords": [
+                "$200m proves motive",
+                "inheritance makes it obvious",
+                "200 million is enough motive"
+              ]
             }
           ]
+        }
+      },
+      "answer_key": {
+        "true_scenario": "S2",
+        "ruled_out": [
+          "S4"
+        ],
+        "key_evidence": [
+          "E9",
+          "E10",
+          "E11",
+          "E12",
+          "E15"
+        ],
+        "red_herrings": [
+          "E3",
+          "E4",
+          "E13"
+        ],
+        "posteriors": {
+          "S1": 0.15,
+          "S2": 0.78,
+          "S3": 0.05,
+          "S4": 0.02
         }
       }
     }

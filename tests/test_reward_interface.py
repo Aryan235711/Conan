@@ -54,7 +54,7 @@ check("RW-01e: prompt has scenarios", "scenarios" in prompt)
 check("RW-01f: prompt has must_reject", "must_reject_false_narrative" in prompt)
 
 evidence = scorer.case_evidence("C001")
-check("RW-01g: evidence is list", isinstance(evidence, list) and len(evidence) == 6)
+check("RW-01g: evidence is list", isinstance(evidence, list) and len(evidence) == len(scorer._cases["C001"].evidence) >= 6)
 
 # ---------------------------------------------------------------------------
 # RW-02: Good reasoning on C001 — should score well

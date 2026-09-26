@@ -2,8 +2,8 @@
 # Detective Conan Reasoning Engine
 
 ![MIT License](https://img.shields.io/badge/license-MIT-green.svg)
-![Build](https://img.shields.io/badge/build-passing-brightgreen)
-![Python](https://img.shields.io/badge/python-3.8%2B-blue)
+[![tests](https://github.com/Aryan235711/Conan/actions/workflows/tests.yml/badge.svg)](https://github.com/Aryan235711/Conan/actions/workflows/tests.yml)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-orange)
 
 A research-grade reasoning evaluation engine for detective-style logic and AI tasks. This public repository contains the core engine, test harness, and documentation for research and educational use.
