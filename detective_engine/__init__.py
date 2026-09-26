@@ -2,6 +2,7 @@
 
 from detective_engine.engine.models import (
     AnalysisRecord,
+    AnswerKey,
     CaseDefinition,
     CaseSolution,
     Concept,
@@ -24,9 +25,11 @@ from detective_engine.engine.causality_validator import CausalityValidator, Caus
 from detective_engine.engine.user_profile import UserProfile, SkillProfile
 from detective_engine.engine.validator import Validator
 from detective_engine.engine.reward_interface import RewardScorer
+from detective_engine.engine.verifiable import VerifiableScorer, VerifiableResult, build_prompt, parse_final_answer
 
 __all__ = [
     "AnalysisRecord",
+    "AnswerKey",
     "BayesianDimension",
     "BayesianResult",
     "BayesianValidator",
@@ -54,5 +57,9 @@ __all__ = [
     "SkillProfile",
     "UserProfile",
     "RewardScorer",
+    "VerifiableResult",
+    "VerifiableScorer",
+    "build_prompt",
+    "parse_final_answer",
     "Validator",
 ]

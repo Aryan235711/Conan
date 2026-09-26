@@ -194,6 +194,37 @@ class CaseQualityValidator:
                 "must_reject_false_narrative=true but no false_narrative defined.",
             ))
 
+        # Answer key integrity (verifiable scorer v2)
+        for msg in self._answer_key_problems(case):
+            report.issues.append(ValidationIssue(cid, "error", msg))
+
+    @staticmethod
+    def _answer_key_problems(case: CaseDefinition) -> list[str]:
+        key = case.answer_key
+        if key is None:
+            return []
+        scen = {f"S{i}" for i in range(1, len(case.scenarios) + 1)}
+        evid = {f"E{i}" for i in range(1, len(case.evidence) + 1)}
+        problems = []
+        if key.true_scenario not in scen:
+            problems.append(f"answer_key.true_scenario '{key.true_scenario}' is not a scenario ID.")
+        if key.true_scenario in key.ruled_out:
+            problems.append("answer_key rules out its own true scenario.")
+        bad = [s for s in key.ruled_out if s not in scen]
+        bad += [e for e in key.key_evidence + key.red_herrings if e not in evid]
+        if bad:
+            problems.append(f"answer_key references unknown IDs: {bad}.")
+        if set(key.key_evidence) & set(key.red_herrings):
+            problems.append("answer_key lists the same evidence as key and as a red herring.")
+        if key.posteriors:
+            if set(key.posteriors) != scen:
+                problems.append("answer_key.posteriors must cover exactly the scenario IDs.")
+            elif abs(sum(key.posteriors.values()) - 1.0) > 0.01:
+                problems.append("answer_key.posteriors must sum to 1.")
+            elif max(key.posteriors, key=key.posteriors.get) != key.true_scenario:
+                problems.append("answer_key.posteriors do not favour the true scenario.")
+        return problems
+
     # ------------------------------------------------------------------
     # circular dependency check
     # ------------------------------------------------------------------

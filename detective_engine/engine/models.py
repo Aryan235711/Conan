@@ -283,6 +283,48 @@ class BayesianSolution:
 
 
 # ---------------------------------------------------------------------------
+# Verifiable answer key (scorer v2)
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class TimeWindow:
+    """A clock-time interval such as a time-of-death window ("HH:MM" strings)."""
+    label: str
+    earliest: str
+    latest: str
+
+    @classmethod
+    def from_dict(cls, d: dict) -> TimeWindow:
+        return cls(label=d.get("label", "time window"), earliest=d["earliest"], latest=d["latest"])
+
+
+@dataclass(frozen=True)
+class AnswerKey:
+    """Machine-checkable ground truth for a case.
+
+    Scenario IDs are "S1".."Sn" in the order of ``CaseDefinition.scenarios``;
+    evidence IDs are "E1".."En" in the order of ``CaseDefinition.evidence``.
+    """
+    true_scenario: str
+    ruled_out: tuple[str, ...] = ()
+    key_evidence: tuple[str, ...] = ()
+    red_herrings: tuple[str, ...] = ()
+    time_window: TimeWindow | None = None
+    posteriors: dict[str, float] = field(default_factory=dict)
+
+    @classmethod
+    def from_dict(cls, d: dict) -> AnswerKey:
+        return cls(
+            true_scenario=d["true_scenario"],
+            ruled_out=tuple(d.get("ruled_out", [])),
+            key_evidence=tuple(d.get("key_evidence", [])),
+            red_herrings=tuple(d.get("red_herrings", [])),
+            time_window=TimeWindow.from_dict(d["time_window"]) if d.get("time_window") else None,
+            posteriors=dict(d.get("posteriors", {})),
+        )
+
+
+# ---------------------------------------------------------------------------
 # Case solution & definition
 # ---------------------------------------------------------------------------
 
@@ -340,6 +382,7 @@ class CaseDefinition:
     false_narrative: str = ""
     contradictions: list[Contradiction] = field(default_factory=list)
     solution: CaseSolution = field(default_factory=lambda: CaseSolution(unlock_key=""))
+    answer_key: AnswerKey | None = None
 
     @classmethod
     def from_dict(cls, d: dict) -> CaseDefinition:
@@ -360,6 +403,7 @@ class CaseDefinition:
                 Contradiction.from_dict(c) for c in d.get("contradictions", [])
             ],
             solution=CaseSolution.from_dict(d["solution"]),
+            answer_key=AnswerKey.from_dict(d["answer_key"]) if d.get("answer_key") else None,
         )
 
 
