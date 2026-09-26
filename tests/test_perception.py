@@ -865,3 +865,8 @@ for r in results:
         all_flags[f] = all_flags.get(f, 0) + 1
 for flag, count in sorted(all_flags.items(), key=lambda x: -x[1]):
     print(f"  {flag:30s}  {count} times")
+
+# Exit non-zero on any failed scenario so runners and CI can detect it.
+if any(not r["pass"] for r in results):
+    import sys
+    sys.exit(1)

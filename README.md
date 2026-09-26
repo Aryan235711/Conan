@@ -57,6 +57,7 @@ A research-grade reasoning evaluation engine for detective-style logic and AI ta
 │   └── QUALITY_COMPARISON.md
 ├── main.py
 └── tests/
+    ├── run_all.py
     ├── test_causality.py
     ├── test_integration.py
     ├── test_llm_judge.py
@@ -87,8 +88,10 @@ python3 main.py
 ### 2. Run Tests
 
 ```bash
-python3 -m unittest discover tests
+python3 tests/run_all.py
 ```
+
+The test files are standalone scripts, so `unittest discover` does not find them. The runner executes each one and exits non-zero if any fail.
 
 ---
 

@@ -619,3 +619,8 @@ if passed < total:
             print(f"  ✗ {r['name']}")
 else:
     print("\nAll checks passed.")
+
+# Exit non-zero on any failed check so runners and CI can detect it.
+if passed < total:
+    import sys
+    sys.exit(1)
