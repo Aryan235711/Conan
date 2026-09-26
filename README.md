@@ -24,11 +24,8 @@ A research-grade reasoning evaluation engine for detective-style logic and AI ta
 ├── .gitignore
 ├── CITATION.cff
 ├── CONTRIBUTING.md
-├── FINAL_STRATEGY.md
 ├── LICENSE
-├── ORGANIZATION_COMPLETE.md
 ├── README.md
-├── check_what_will_push.sh
 ├── detective_engine/
 │   ├── __init__.py
 │   ├── cases/
@@ -49,18 +46,23 @@ A research-grade reasoning evaluation engine for detective-style logic and AI ta
 │       ├── llm_judge.py
 │       ├── models.py
 │       ├── perception_integrity.py
+│       ├── phase_generator.py
 │       ├── reasoning_graph.py
+│       ├── reasoning_parser.py
+│       ├── reward_interface.py
 │       ├── user_profile.py
 │       └── validator.py
 ├── docs/
 │   ├── PROJECT_COMPLETE.md
-│   ├── QUALITY_COMPARISON.md
-│   
-│   
+│   └── QUALITY_COMPARISON.md
 ├── main.py
-├── tests/
-│   ├── test_causality.py
-│   └── test_perception.py
+└── tests/
+    ├── test_causality.py
+    ├── test_integration.py
+    ├── test_llm_judge.py
+    ├── test_perception.py
+    ├── test_reasoning_parser.py
+    └── test_reward_interface.py
 ```
 
 

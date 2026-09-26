@@ -24,6 +24,7 @@ If no model is available the judge silently returns skip results.
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import textwrap
 from dataclasses import dataclass, field
@@ -412,29 +413,43 @@ class LLMJudge:
 
     @staticmethod
     def _safe_json(raw: str) -> dict:
-        """Extract JSON from LLM response (tolerant of messy output)."""
-        # Try to find JSON object in the response
-        start = raw.find("{")
-        end = raw.rfind("}") + 1
-        if start >= 0 and end > start:
+        """Extract the verdict JSON from an LLM response (tolerant of messy output).
+
+        Always returns a dict whose "score" value is an uppercase string.
+
+        Order of attempts:
+            1. Drop reasoning-model <think> blocks, which often mention
+               every possible verdict while deliberating.
+            2. Use the LAST JSON object that has a "score" key.
+            3. Keyword fallback with whole-word matching.  Negative verdicts
+               win over positive ones, so "INCOHERENT" is never read as
+               "COHERENT" and "WEAK, not strong" is never read as "STRONG".
+        """
+        text = raw or ""
+        text = re.sub(r"<think>.*?</think>", " ", text, flags=re.DOTALL | re.IGNORECASE)
+        # An unterminated <think> block (e.g. truncated output) is dropped entirely.
+        text = re.sub(r"<think>.*", " ", text, flags=re.DOTALL | re.IGNORECASE)
+
+        decoder = json.JSONDecoder()
+        verdict: dict | None = None
+        for match in re.finditer(r"\{", text):
             try:
-                return json.loads(raw[start:end])
+                obj, _end = decoder.raw_decode(text, match.start())
             except json.JSONDecodeError:
-                pass
+                continue
+            if isinstance(obj, dict) and "score" in obj:
+                verdict = obj
+        if verdict is not None:
+            verdict = dict(verdict)
+            verdict["score"] = str(verdict["score"]).strip().upper()
+            return verdict
 
-        # Try the whole string
-        try:
-            return json.loads(raw)
-        except (json.JSONDecodeError, ValueError):
-            pass
-
-        # Keyword fallback
-        upper = raw.upper()
-        for positive in ("STRONG", "COHERENT", "SURVIVES", "VALID"):
-            if positive in upper:
-                return {"score": positive}
-        for negative in ("WEAK", "INCOHERENT", "FRAGILE", "INVALID"):
-            if negative in upper:
+        upper = text.upper()
+        for negative in ("INCOHERENT", "INVALID", "FRAGILE", "WEAK"):
+            if re.search(rf"\b{negative}\b", upper):
                 return {"score": negative}
+        for positive in ("STRONG", "COHERENT", "SURVIVES", "VALID"):
+            if re.search(rf"\b{positive}\b", upper):
+                return {"score": positive}
 
         return {"score": "SKIP", "reason": "Could not parse LLM response."}
