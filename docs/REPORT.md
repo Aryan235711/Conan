@@ -198,6 +198,14 @@ answers.
 model did slightly worse than the untrained one. The method it learned is
 specific to the generated case family.
 
+**It does not transfer to a different reasoning type.** On 50 cases of the
+which-witness-is-lying family, which uses the same vocabulary as training but
+a different kind of deduction, the timeline-trained model scored 30% (19-44)
+against 26% (16-40) untrained, with chance at 26%. Both are at chance. The
+untrained model already produces valid answers on this family, so there is no
+format gain to find either. Training on several families at once is the next
+test of transfer.
+
 **DeepSeek-R1 ran out of budget.** On its first case it spent its whole
 3,072-token budget thinking and never produced an answer. A fair evaluation
 needs about four times the budget, roughly 20 minutes per case on this

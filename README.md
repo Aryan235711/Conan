@@ -34,7 +34,9 @@ of that gain is format: among answers that parse, accuracy moves only from
 arithmetic (time-window score 0.01 to 0.41) and spotting red herrings (0.08
 to 0.41). Picking the culprit, which needs every step to be right, is still
 unsolved at this size. That is the job of the RL stage, since the verifiable
-reward pays for the correct conclusion directly. A first run on 20 cases
+reward pays for the correct conclusion directly. The timeline-trained model
+also shows no transfer to the which-witness-is-lying family, where it scores
+30% against 26% chance on 50 cases. A first run on 20 cases
 suggested 45% for the SFT model; the 200-case run corrected it, and both are
 documented in the report.
 
@@ -125,6 +127,12 @@ bash training/gpu_run.sh                 # full run on a GPU, several hours
 SMOKE=1 bash training/gpu_run.sh         # tiny version that checks every stage
 MODEL=Qwen/Qwen2.5-3B-Instruct NAME=qwen3b bash training/gpu_run.sh
 ```
+
+Without a GPU, `training/expert_iteration.py` runs reward-filtered
+self-training on a 16 GB Mac: the model samples several answers per case, the
+verifiable scorer keeps only correct and consistent ones, and the model is
+fine-tuned on them, round after round. Each phase runs in its own process so
+memory is released between phases.
 
 The individual steps are `training/make_sft_data.py`, `sft_train.py`,
 `grpo_train.py` and `merge_adapters.py`. A short supervised warm-up teaches
