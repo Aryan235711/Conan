@@ -223,6 +223,60 @@ no adapter from this run was evaluated. A real run needs a single GPU with
 24 GB or more; the script is ready for it and now checkpoints frequently so
 an interrupted run keeps its progress.
 
+### Expert iteration on the Mac
+
+Without a GPU, reward-driven training was done with expert iteration: the
+model samples four answers per training case, the verifiable scorer keeps the
+best one only if it passes (correct, consistent, reward at least 0.7), and a
+fresh LoRA is trained from the SFT model on every accepted answer so far.
+Rounds 1 and 2 used 200 mixed-level training cases each; round 3 used 200
+level-3 cases only, matching the held-out difficulty. Each round took about
+five hours on the M2.
+
+| Model (held-out, 200 cases) | Accuracy | Pass rate | Self-contradicting | Window score |
+|---|---|---|---|---|
+| SFT start | 24.0% (19-30) | 10.5% | 61% | 0.40 |
+| Round 1 (85 accepted) | 21.5% (16-28) | 11.5% | 49% | 0.42 |
+| Round 2 (194 accepted) | 24.0% (19-30) | 14.5% | 45% | 0.38 |
+| Round 3, level 3 only (272 accepted) | 20.0% (15-26) | 10.0% | 48% | 0.32 |
+
+Expert iteration made the model more consistent and, in round 2, fully right
+more often, but it did not raise culprit accuracy on held-out cases.
+Training only on hard cases made things slightly worse. On training cases the
+model did improve: acceptance on unseen training cases rose from 43% in
+round 1 to 55% in round 2.
+
+### Where the reasoning breaks
+
+`benchmarks/step_breakdown.py` checks every step of every answer against the
+case's facts. For the SFT model and the best expert-iteration round:
+
+| Step | SFT start | Round 2 |
+|---|---|---|
+| Time window right | 21% | 20% |
+| Accident ruled out | 95% | 98% |
+| All key-less suspects ruled out | 69% | 76% |
+| All alibi-covered suspects ruled out | 55% | 46% |
+| True culprit kept (not ruled out) | 27% | 25% |
+| Final pick right, when every step was right | 100% | 100% |
+
+The final pick is never the problem. The main failure is ruling out the true
+culprit, and the breakdown shows why. When the culprit has a verified alibi
+that does not cover the window, the SFT model still rules them out 74-83% of
+the time, and after round 2 this rises to 84-85%. Getting the time window
+right barely changes it (culprit kept 25% with the right window, 27% with a
+wrong one). The model is not comparing alibi times with the window at all; it
+has learned the shortcut "a verified alibi clears the suspect". Expert
+iteration reinforced that shortcut, because it works on many easier training
+cases.
+
+This is the same shortcut as the unverified-alibi leakage probe, which scores
+35% on this split. The models learned a weaker version of a shortcut rather
+than the method. The next experiments target this directly: a micro-skill
+test of whether the model can compare two time intervals at all, and
+structured per-suspect fields so the reward can check each coverage decision
+instead of only the final answer.
+
 ## 6. Training pipeline
 
 - **SFT warm-up.** Reasoning traces are written from the solver's facts in a

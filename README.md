@@ -40,8 +40,13 @@ also shows no transfer to the which-witness-is-lying family, where it scores
 suggested 45% for the SFT model; the 200-case run corrected it, and both are
 documented in the report.
 
-GRPO ran for 12 steps before the laptop ran out of memory. The pipeline works
-end to end; a full run needs a GPU. See [docs/REPORT.md](docs/REPORT.md).
+Three rounds of expert iteration on the Mac, a reward-filtered self-training
+method that fits in 16 GB, made the model more consistent but did not raise
+held-out accuracy (best round 24.0%, same as SFT). A step-by-step error
+analysis found why: the model treats any verified alibi as clearing a
+suspect, without comparing its times with the death window, so it rules out
+the real culprit about three times in four. Whenever every elimination step
+is right, the final pick is right. See [docs/REPORT.md](docs/REPORT.md).
 
 ## Why a verifiable reward
 
