@@ -298,6 +298,16 @@ better than the 0.5B ones. A typical step-by-step error inverts the rule:
 "the alibi starts at 21:09, before the window opens at 23:13, so it does not
 cover the window", when starting earlier is exactly what covering requires.
 
+**The skill can be taught quickly.** `training/make_interval_data.py` writes
+interval questions with worked answers that show every step: add 24 to the
+hour of any time after midnight, check the alibi starts at or before the
+window opens, check it ends at or after the window closes. The training
+questions use three phrasings the probe never uses, and none of the probe's
+items. After 18 minutes of LoRA training on 1,200 of them, the SFT 0.5B model
+scores 99% (97-100) on the probe's 200 step-by-step items, up from 42%, with
+no drop across midnight. A 0.5B model that is shown the work beats an
+untrained 7B model by more than 40 points on this skill.
+
 Two conclusions follow. First, a larger model alone will not fix the case
 failures; the skill has to be taught. Second, the SFT traces were part of the
 problem: they state conclusions such as "covering the whole window, so S4 is
