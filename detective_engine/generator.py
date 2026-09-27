@@ -395,6 +395,9 @@ SPLITS = {
     # transfer across reasoning types rather than across vocabulary.
     "liar_train": (1000, 5, (1, 2, 3), "A", "liar"),
     "liar_test": (200, 6, (1, 2, 3), "A", "liar"),
+    # Combined family: timeline + lying witness (levels 2-3 only).
+    "combo_train": (1000, 7, (2, 3), "A", "composite"),
+    "combo_test": (200, 8, (2, 3), "A", "composite"),
 }
 
 
@@ -405,10 +408,11 @@ def main() -> None:
     args = ap.parse_args()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    from . import liar
+    from . import composite, liar
+    prefixes = {"liar_test": "LT", "liar_train": "LR", "combo_train": "CR", "combo_test": "CT"}
     for name, (count, seed, levels, pool, family) in SPLITS.items():
-        gen = liar.generate if family == "liar" else generate
-        prefix = "LT" if name == "liar_test" else ("LR" if name == "liar_train" else name[:2].upper())
+        gen = {"liar": liar.generate, "composite": composite.generate}.get(family, generate)
+        prefix = prefixes.get(name, name[:2].upper())
         cases = gen(max(1, int(count * args.scale)), seed, levels, pool, prefix=prefix)
         with open(out / f"{name}.jsonl", "w", encoding="utf-8") as f:
             for c in cases:

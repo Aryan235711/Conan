@@ -4,8 +4,8 @@
 #   bash training/gpu_run.sh            # full run, several hours
 #   SMOKE=1 bash training/gpu_run.sh    # tiny version to check the pipeline
 #
-# Steps: set up an isolated env, generate data for both reasoning families,
-# evaluate the base model, SFT on solver traces from BOTH families, evaluate,
+# Steps: set up an isolated env, generate data for all three reasoning families,
+# evaluate the base model, SFT on solver traces from ALL families, evaluate,
 # GRPO from the SFT adapter, evaluate, and print the results table.
 # Every model is scored by the same harness on the same held-out splits.
 # Results land in runs/; paste the report into docs/REPORT.md.
@@ -20,7 +20,7 @@ SFT_STEPS="${SFT_STEPS:-300}"
 GRPO_STEPS="${GRPO_STEPS:-400}"
 GENS="${GENS:-8}"
 COMPLETION="${COMPLETION:-1024}"
-SPLITS="test_id,test_ood,liar_test"
+SPLITS="test_id,test_ood,liar_test,combo_test"
 
 if [[ "${SMOKE:-0}" == "1" ]]; then
   MODEL="Qwen/Qwen2.5-0.5B-Instruct"; NAME="smoke"; EVAL_N=2
@@ -37,20 +37,20 @@ export PYTORCH_ENABLE_MPS_FALLBACK=1
 echo "== data"
 python3 -m detective_engine.generator --out data/generated
 python3 training/make_sft_data.py \
-  --train data/generated/train.jsonl,data/generated/liar_train.jsonl \
-  --out data/generated/sft_both.jsonl
+  --train data/generated/train.jsonl,data/generated/liar_train.jsonl,data/generated/combo_train.jsonl \
+  --out data/generated/sft_all.jsonl
 
 echo "== base model: $MODEL"
 $PY -m detective_engine.evaluate --agent "hf:$MODEL" --splits "$SPLITS" --limit "$EVAL_N"
 
-echo "== SFT on both families"
-$PY training/sft_train.py --model "$MODEL" --data data/generated/sft_both.jsonl \
+echo "== SFT on all three families"
+$PY training/sft_train.py --model "$MODEL" --data data/generated/sft_all.jsonl \
   --max-steps "$SFT_STEPS" --output "runs/sft/$NAME"
 $PY -m detective_engine.evaluate --agent "hf:runs/sft/$NAME" --splits "$SPLITS" --limit "$EVAL_N"
 
 echo "== GRPO from the SFT adapter"
 TRAIN_MIX=data/generated/grpo_mix.jsonl
-cat data/generated/train.jsonl data/generated/liar_train.jsonl > "$TRAIN_MIX"
+cat data/generated/train.jsonl data/generated/liar_train.jsonl data/generated/combo_train.jsonl > "$TRAIN_MIX"
 $PY training/grpo_train.py --model "$MODEL" --init-adapter "runs/sft/$NAME" --train "$TRAIN_MIX" \
   --levels 1,2,3 --max-steps "$GRPO_STEPS" --num-generations "$GENS" --batch-size "$GENS" \
   --max-completion-length "$COMPLETION" --output "runs/grpo/$NAME"

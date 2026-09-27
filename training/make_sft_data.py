@@ -69,7 +69,74 @@ def write_liar_trace(raw: dict) -> str:
     return "\n".join(lines)
 
 
+def write_composite_trace(raw: dict) -> str:
+    """Trace for the combined family: window, lying witness, voided alibi, access, alibis."""
+    case = CaseDefinition.from_dict(raw)
+    facts = [Fact(f["kind"], f["text"], f["data"], f["role"]) for f in raw["generator"]["facts"]]
+    eid = {id(f): f"E{i}" for i, f in enumerate(facts, 1)}
+    label_of = {}
+    for i, s in enumerate(case.scenarios, 1):
+        label_of["accident" if s.endswith("was an accident.") else s.split(",")[0].strip()] = f"S{i}"
+    lo, hi = death_window(facts)
+    by = lambda k: [f for f in facts if f.kind == k]  # noqa: E731
+    lines = ["Step 1 - Time of death."]
+    for f in by("body_temp"):
+        drop = BODY_TEMP - f.data["temp"]; hours = drop / COOLING_PER_HOUR
+        est = round(f.data["discovery"] - hours * 60)
+        lines.append(f"{eid[id(f)]}: a drop of {drop:.1f}°C is about {hours:.1f} hours, so death was around {fmt(est)}, "
+                     f"within an hour: {fmt(est - ESTIMATE_TOLERANCE)} to {fmt(est + ESTIMATE_TOLERANCE)}.")
+    for f in by("last_alive"):
+        lines.append(f"{eid[id(f)]}: the victim was alive at {fmt(f.data['time'])}.")
+    lines.append(f"So the death window is {fmt(lo)} to {fmt(hi)}.")
+    for f in by("homicide"):
+        lines.append(f"{eid[id(f)]} rules out an accident ({label_of['accident']}).")
+
+    lines.append("\nStep 2 - Find the lying witness by checking each alibi claim against the records.")
+    liar = None
+    for c in by("witness_alibi"):
+        d = c.data
+        for r in by("record"):
+            rd = r.data
+            if rd["name"] in (d["witness"], d["suspect"]) and d["start"] <= rd["time"] <= d["end"] and rd["place"] != d["place"]:
+                liar = d["witness"]
+                lines.append(f"{eid[id(c)]} says {d['witness']} and {d['suspect']} were at {d['place']} from "
+                             f"{fmt(d['start'])} to {fmt(d['end'])}, but {eid[id(r)]} shows {rd['name']} at {rd['place']} "
+                             f"at {fmt(rd['time'])}. So {d['witness']} is lying and this alibi does not count.")
+    lines.append("Every other alibi claim fits the records.")
+
+    lines.append("\nStep 3 - Access.")
+    kh = by("keyholders")[0]
+    keyholders = set(kh.data["names"])
+    lines.append(f"{eid[id(by('no_forced_entry')[0])]}: no forced entry, so the killer used a key. {eid[id(kh)]} lists the key holders.")
+    for name, sid in label_of.items():
+        if name != "accident" and name not in keyholders:
+            lines.append(f"{name} ({sid}) has no key and is ruled out.")
+
+    lines.append(f"\nStep 4 - Truthful alibis against the window {fmt(lo)} to {fmt(hi)}.")
+    culprit = None
+    for c in by("witness_alibi"):
+        d = c.data
+        if d["witness"] == liar:
+            culprit = d["suspect"]
+            lines.append(f"{eid[id(c)]}: {d['suspect']}'s alibi came from the liar, so {d['suspect']} is not cleared.")
+        elif d["start"] <= lo and d["end"] >= hi:
+            lines.append(f"{eid[id(c)]}: {d['suspect']} is covered from {fmt(d['start'])} to {fmt(d['end'])}, "
+                         f"the whole window, so {label_of[d['suspect']]} is ruled out.")
+
+    herr = [f for f in facts if f.role == "herring"]
+    lines.append("\nStep 5 - Red herrings.")
+    for f in herr:
+        lines.append(f"{eid[id(f)]}: " + ("a motive for someone already excluded; motive alone proves nothing."
+                                          if f.kind == "motive" else "behaviour or background, not evidence of who or when."))
+    answer = agent_solver(case, "", raw)
+    lines.append(f"\nConclusion: {culprit} ({answer['most_likely']}) had a key and no truthful alibi for the whole window.")
+    lines.append("\n```json\n" + json.dumps(answer, indent=2) + "\n```")
+    return "\n".join(lines)
+
+
 def write_trace(raw: dict) -> str:
+    if raw["generator"].get("family") == "composite":
+        return write_composite_trace(raw)
     if raw["generator"].get("family") == "liar":
         return write_liar_trace(raw)
     case = CaseDefinition.from_dict(raw)

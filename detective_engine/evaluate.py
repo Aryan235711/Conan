@@ -131,6 +131,22 @@ def agent_solver(case, prompt, raw):
     if not raw:
         return agent_uniform(case, prompt, raw)
     facts = [Fact(f["kind"], f["text"], f["data"], f["role"]) for f in raw["generator"]["facts"]]
+    if raw["generator"].get("family") == "composite":
+        from . import composite
+        labels = ["accident" if s.endswith("was an accident.") else _scenario_person(s) for s in case.scenarios]
+        suspects = [l for l in labels if l != "accident"]
+        wit = raw["generator"]["witnesses"]
+        sol = composite.solve(facts, suspects, wit, True)
+        top_label = next(iter(sol))
+        top = f"S{labels.index(top_label) + 1}"
+        key = [f"E{i}" for i, f in enumerate(facts, 1)
+               if f.kind != "rule" and composite.solve([g for g in facts if g is not f], suspects, wit, True) != sol]
+        herr = [f"E{i}" for i, f in enumerate(facts, 1) if f.kind in ("demeanour", "salient")
+                or (f.kind == "motive" and f.data.get("name") != top_label)]
+        lo, hi = death_window(facts)
+        return {"most_likely": top, "probabilities": {f"S{i}": float(f"S{i}" == top) for i in range(1, len(labels) + 1)},
+                "ruled_out": [f"S{i}" for i in range(1, len(labels) + 1) if f"S{i}" != top],
+                "key_evidence": key, "red_herrings": herr, "time_window": {"earliest": fmt(lo), "latest": fmt(hi)}}
     if raw["generator"].get("family") == "liar":
         from . import liar
         names = [_scenario_person(s) for s in case.scenarios]
