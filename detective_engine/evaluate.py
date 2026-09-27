@@ -230,7 +230,7 @@ def make_agent_hf(path: str, max_new_tokens: int = 1024):
     return agent
 
 
-def get_agent(spec: str) -> Callable:
+def get_agent(spec: str, max_new_tokens: int = 1024) -> Callable:
     if spec == "uniform":
         return agent_uniform
     if spec == "random":
@@ -244,7 +244,7 @@ def get_agent(spec: str) -> Callable:
     if spec.startswith("ollama:"):
         return make_agent_ollama(spec.split(":", 1)[1])
     if spec.startswith("hf:"):
-        return make_agent_hf(spec.split(":", 1)[1])
+        return make_agent_hf(spec.split(":", 1)[1], max_new_tokens=max_new_tokens)
     sys.exit(f"unknown agent: {spec}")
 
 
@@ -256,14 +256,16 @@ def _slug(spec: str) -> str:
     return re.sub(r"[^A-Za-z0-9._-]+", "_", spec)
 
 
-def run(spec: str, splits: list[str], limit: int | None) -> None:
-    agent = get_agent(spec)
+def run(spec: str, splits: list[str], limit: int | None, max_new_tokens: int = 1024) -> None:
+    agent = get_agent(spec, max_new_tokens)
+    # Runs with a non-default output budget are stored separately so results never mix.
+    run_name = _slug(spec) + (f"_max{max_new_tokens}" if max_new_tokens != 1024 else "")
     for split in splits:
         cases = load_split(split)
         if limit:
             cases = cases[:limit]
         raw_by_id = _raw_generated(split)
-        out = RUNS / _slug(spec) / f"{split}.jsonl"
+        out = RUNS / run_name / f"{split}.jsonl"
         out.parent.mkdir(parents=True, exist_ok=True)
         done = set()
         if out.exists():
@@ -284,7 +286,8 @@ def run(spec: str, splits: list[str], limit: int | None) -> None:
                 answer, error = "", f"{type(exc).__name__}: {exc}"
             elapsed = time.time() - t0
             res = score_answer(case, answer)
-            rec = {"case_id": case.id, "split": split, "agent": spec,
+            rec = {"case_id": case.id, "split": split,
+                   "agent": spec + (f" (max {max_new_tokens} tokens)" if max_new_tokens != 1024 else ""),
                    "level": (raw_by_id.get(case.id) or {}).get("generator", {}).get("level"),
                    "seconds": round(elapsed, 2), "error": error,
                    "raw_output": answer if isinstance(answer, str) else json.dumps(answer),
@@ -352,9 +355,10 @@ def main() -> None:
     ap.add_argument("--splits", default="gold,test_id,test_ood")
     ap.add_argument("--limit", type=int, default=None, help="max cases per split")
     ap.add_argument("--report", action="store_true", help="print a markdown summary of runs/")
+    ap.add_argument("--max-new-tokens", type=int, default=1024, help="output budget for hf: agents")
     args = ap.parse_args()
     if args.agent:
-        run(args.agent, [s.strip() for s in args.splits.split(",") if s.strip()], args.limit)
+        run(args.agent, [s.strip() for s in args.splits.split(",") if s.strip()], args.limit, args.max_new_tokens)
     if args.report or not args.agent:
         print(report())
 
