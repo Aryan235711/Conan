@@ -33,6 +33,9 @@ from detective_engine.engine.verifiable import build_prompt  # noqa: E402
 from detective_engine.evaluate import agent_solver  # noqa: E402
 from detective_engine.generator import BODY_TEMP, COOLING_PER_HOUR, ESTIMATE_TOLERANCE, Fact, death_window, fmt  # noqa: E402
 
+sys.path.insert(0, str(ROOT / "training"))
+from coverage_text import explain_coverage  # noqa: E402
+
 
 def write_liar_trace(raw: dict) -> str:
     """Trace for the witness-consistency family: find the statement a record contradicts."""
@@ -119,9 +122,13 @@ def write_composite_trace(raw: dict) -> str:
         if d["witness"] == liar:
             culprit = d["suspect"]
             lines.append(f"{eid[id(c)]}: {d['suspect']}'s alibi came from the liar, so {d['suspect']} is not cleared.")
-        elif d["start"] <= lo and d["end"] >= hi:
-            lines.append(f"{eid[id(c)]}: {d['suspect']} is covered from {fmt(d['start'])} to {fmt(d['end'])}, "
-                         f"the whole window, so {label_of[d['suspect']]} is ruled out.")
+        else:
+            lines.append(f"{eid[id(c)]}: {d['witness']} vouches for {d['suspect']} from {fmt(d['start'])} to {fmt(d['end'])}.")
+            lines += explain_coverage(d["start"], d["end"], lo, hi, who=f"{d['suspect']}'s alibi")
+            if d["start"] <= lo and d["end"] >= hi:
+                lines.append(f"So {d['suspect']} ({label_of[d['suspect']]}) is ruled out.")
+            else:
+                lines.append(f"So this alibi does not clear {d['suspect']}.")
 
     herr = [f for f in facts if f.role == "herring"]
     lines.append("\nStep 5 - Red herrings.")
@@ -189,12 +196,12 @@ def write_trace(raw: dict) -> str:
         if keyholders and name not in keyholders:
             continue
         a, b = f.data["start"], f.data["end"]
+        lines.append(f"{eid[id(f)]}: {name} is verified from {fmt(a)} to {fmt(b)}.")
+        lines += explain_coverage(a, b, lo, hi, who=f"{name}'s alibi")
         if a <= lo and b >= hi:
-            lines.append(f"{eid[id(f)]}: {name} is verified from {fmt(a)} to {fmt(b)}, covering the whole window, "
-                         f"so {label_of[name]} is ruled out.")
+            lines.append(f"So {name} ({label_of[name]}) is ruled out.")
         else:
-            lines.append(f"{eid[id(f)]}: {name} is verified only from {fmt(a)} to {fmt(b)}, which does not cover "
-                         f"the whole window, so it does not clear them.")
+            lines.append(f"So this alibi does not clear {name}.")
     for f in by_kind.get("testimony", []):
         name = f.data["name"]
         if not keyholders or name in keyholders:
