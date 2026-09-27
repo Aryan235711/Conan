@@ -147,7 +147,7 @@ def main() -> None:
         temperature=1.0,
         reward_weights=[1.0, args.format_weight],
         logging_steps=1,
-        save_steps=max(50, args.max_steps // 4),
+        save_steps=max(5, min(50, args.max_steps // 8)),  # checkpoint often: long runs get interrupted
         bf16=cuda,
         use_cpu=not cuda and not torch.backends.mps.is_available(),
         log_completions=True,
