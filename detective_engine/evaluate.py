@@ -94,12 +94,19 @@ def make_agent_random(seed: int = 0):
     return agent
 
 
+def _scenario_person(s: str) -> str:
+    """Person named by a generated scenario ("X, the role, killed V." or "X is lying.")."""
+    if s.endswith(" is lying."):
+        return s[: -len(" is lying.")]
+    return s.split(",")[0].strip() if "," in s else ""
+
+
 def agent_mentions(case, prompt, raw):
     """Pick the scenario whose named person appears in the most evidence lines."""
     counts = {}
     for i, s in enumerate(case.scenarios, 1):
-        name = s.split(",")[0].strip()
-        counts[f"S{i}"] = sum(1 for e in case.evidence if name and name in e) if " " in name else -1
+        name = _scenario_person(s)
+        counts[f"S{i}"] = sum(1 for e in case.evidence if name in e) if " " in name else -1
     top = max(counts, key=counts.get)
     n = _n(case)
     probs = {f"S{i}": (0.6 if f"S{i}" == top else 0.4 / (n - 1)) for i in range(1, n + 1)}
@@ -124,6 +131,18 @@ def agent_solver(case, prompt, raw):
     if not raw:
         return agent_uniform(case, prompt, raw)
     facts = [Fact(f["kind"], f["text"], f["data"], f["role"]) for f in raw["generator"]["facts"]]
+    if raw["generator"].get("family") == "liar":
+        from . import liar
+        names = [_scenario_person(s) for s in case.scenarios]
+        n_places = raw["generator"]["n_places"]
+        sol = liar.solve(facts, names, n_places)
+        top = f"S{names.index(next(iter(sol))) + 1}"
+        key = [f"E{i}" for i, f in enumerate(facts, 1)
+               if f.kind != "rule" and liar.solve([g for g in facts if g is not f], names, n_places) != sol]
+        herr = [f"E{i}" for i, f in enumerate(facts, 1) if f.kind in ("demeanour", "salient")]
+        return {"most_likely": top, "probabilities": {f"S{i}": float(f"S{i}" == top) for i in range(1, len(names) + 1)},
+                "ruled_out": [f"S{i}" for i in range(1, len(names) + 1) if f"S{i}" != top],
+                "key_evidence": key, "red_herrings": herr}
     labels = []
     for s in case.scenarios:
         labels.append("accident" if s.endswith("was an accident.") else s.split(",")[0].strip())

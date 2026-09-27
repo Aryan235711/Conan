@@ -34,7 +34,44 @@ from detective_engine.evaluate import agent_solver  # noqa: E402
 from detective_engine.generator import BODY_TEMP, COOLING_PER_HOUR, ESTIMATE_TOLERANCE, Fact, death_window, fmt  # noqa: E402
 
 
+def write_liar_trace(raw: dict) -> str:
+    """Trace for the witness-consistency family: find the statement a record contradicts."""
+    case = CaseDefinition.from_dict(raw)
+    facts = raw["generator"]["facts"]
+    eid = {i: f"E{i}" for i in range(1, len(facts) + 1)}
+    names = [s[: -len(" is lying.")] for s in case.scenarios]
+    sid = {n: f"S{i}" for i, n in enumerate(names, 1)}
+    records = [(i, tuple(a)) for i, f in enumerate(facts, 1) if f["kind"] == "record" for a in f["data"]["atoms"]]
+    lines = ["Step 1 - Records are reliable, so each fixes where one person was at one time."]
+    for i, (p, tm, l, _) in records:
+        lines.append(f"{eid[i]}: {p} was at {l} at {fmt(tm)}.")
+    lines.append("\nStep 2 - Check what each statement implies against the records.")
+    liar, clash = None, None
+    for i, f in enumerate(facts, 1):
+        if f["kind"] != "statement":
+            continue
+        for p, tm, l, _ in (tuple(a) for a in f["data"]["atoms"]):
+            for j, (rp, rt, rl, _) in records:
+                if (rp, rt) == (p, tm) and rl != l:
+                    liar, clash = f["data"]["speaker"], (i, j, p, tm, l, rl)
+    i, j, p, tm, l, rl = clash
+    who = "they were" if p == liar else f"{p} was"
+    lines.append(f"{eid[i]}: {liar}'s statement means {who} at {l} at {fmt(tm)}. "
+                 f"{eid[j]} shows {p} at {rl} at {fmt(tm)}. These cannot both be true, so {liar}'s statement is false.")
+    lines.append("Every other statement fits the records and the other statements, so exactly one witness is lying.")
+    herr = [i for i, f in enumerate(facts, 1) if f["kind"] in ("demeanour", "salient")]
+    lines.append("\nStep 3 - Red herrings.")
+    for i in herr:
+        lines.append(f"{eid[i]}: describes behaviour or background, not where anyone was, so it proves nothing.")
+    answer = agent_solver(case, "", raw)
+    lines.append(f"\nConclusion: {liar} ({sid[liar]}) is lying.")
+    lines.append("\n```json\n" + json.dumps(answer, indent=2) + "\n```")
+    return "\n".join(lines)
+
+
 def write_trace(raw: dict) -> str:
+    if raw["generator"].get("family") == "liar":
+        return write_liar_trace(raw)
     case = CaseDefinition.from_dict(raw)
     facts = [Fact(f["kind"], f["text"], f["data"], f["role"]) for f in raw["generator"]["facts"]]
     eid = {id(f): f"E{i}" for i, f in enumerate(facts, 1)}
@@ -117,11 +154,12 @@ def write_trace(raw: dict) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Write SFT traces from the train split.")
-    ap.add_argument("--train", default=str(ROOT / "data" / "generated" / "train.jsonl"))
+    ap.add_argument("--train", default=str(ROOT / "data" / "generated" / "train.jsonl"),
+                    help="one or more comma-separated JSONL files, e.g. train.jsonl,liar_train.jsonl")
     ap.add_argument("--out", default=str(ROOT / "data" / "generated" / "sft_train.jsonl"))
     ap.add_argument("--limit", type=int, default=None)
     args = ap.parse_args()
-    raws = [json.loads(l) for l in open(args.train, encoding="utf-8") if l.strip()]
+    raws = [json.loads(l) for path in args.train.split(",") for l in open(path, encoding="utf-8") if l.strip()]
     if args.limit:
         raws = raws[:args.limit]
     with open(args.out, "w", encoding="utf-8") as f:

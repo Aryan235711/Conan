@@ -352,7 +352,7 @@ def build_case(world: dict[str, Any], case_id: str, level: int, rng: random.Rand
         "teaches": [],
         "solution": {"unlock_key": "GENERATED"},
         "answer_key": answer_key,
-        "generator": {"version": 2, "level": level, "facts": [f.to_dict() for f in facts]},
+        "generator": {"version": 2, "family": "timeline", "level": level, "facts": [f.to_dict() for f in facts]},
     }
 
 
@@ -386,11 +386,15 @@ def load_cases(path: str | Path) -> list[CaseDefinition]:
 
 
 SPLITS = {
-    # name: (count, seed, levels, pool)
-    "train": (2000, 1, (1, 2, 3), "A"),
-    "val": (200, 2, (1, 2, 3), "A"),
-    "test_id": (200, 3, (1, 2, 3), "A"),
-    "test_ood": (200, 4, (3,), "B"),
+    # name: (count, seed, levels, pool, family)
+    "train": (2000, 1, (1, 2, 3), "A", "timeline"),
+    "val": (200, 2, (1, 2, 3), "A", "timeline"),
+    "test_id": (200, 3, (1, 2, 3), "A", "timeline"),
+    "test_ood": (200, 4, (3,), "B", "timeline"),
+    # Second reasoning family, same vocabulary pool as training so it isolates
+    # transfer across reasoning types rather than across vocabulary.
+    "liar_train": (1000, 5, (1, 2, 3), "A", "liar"),
+    "liar_test": (200, 6, (1, 2, 3), "A", "liar"),
 }
 
 
@@ -401,8 +405,11 @@ def main() -> None:
     args = ap.parse_args()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    for name, (count, seed, levels, pool) in SPLITS.items():
-        cases = generate(max(1, int(count * args.scale)), seed, levels, pool, prefix=name[:2].upper())
+    from . import liar
+    for name, (count, seed, levels, pool, family) in SPLITS.items():
+        gen = liar.generate if family == "liar" else generate
+        prefix = "LT" if name == "liar_test" else ("LR" if name == "liar_train" else name[:2].upper())
+        cases = gen(max(1, int(count * args.scale)), seed, levels, pool, prefix=prefix)
         with open(out / f"{name}.jsonl", "w", encoding="utf-8") as f:
             for c in cases:
                 f.write(json.dumps(c, ensure_ascii=False) + "\n")
