@@ -108,3 +108,4 @@ data/generated/
 runs/
 .venv-train/
 drafts/
+BLUEPRINT.md
