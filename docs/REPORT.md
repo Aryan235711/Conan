@@ -277,6 +277,37 @@ test of whether the model can compare two time intervals at all, and
 structured per-suspect fields so the reward can check each coverage decision
 instead of only the final answer.
 
+### Can the models compare two time intervals at all?
+
+`benchmarks/interval_probe.py` isolates the one comparison the cases hinge
+on: given a verified alibi and a death window, does the alibi cover the whole
+window? Half the items are "yes"; the "no" items fail to cover in three ways
+(ending before the window, ending inside it, starting inside it), and about
+half cross midnight. Chance is 50%.
+
+| Model | One-word answer, clock times | One-word answer, plain minutes | Step by step, clock times (120 items) |
+|---|---|---|---|
+| Qwen2.5 0.5B, untrained | 50%, always "yes" | 50%, always "yes" | 45% (36-54) |
+| Qwen2.5 0.5B, SFT | 50%, always "yes" | 50%, always "yes" | 42% (34-51) |
+| Qwen2.5 0.5B, expert iteration round 2 | 50%, always "yes" | 50%, always "yes" | 54% (45-63) |
+| Qwen2.5 Coder 7B | 50%, always "no" | 50%, always "no" | 56% (47-64) |
+
+No model can do it. Asked for one word, each answers the same way every
+time. Given room to reason, all four stay near chance; the 7B model is no
+better than the 0.5B ones. A typical step-by-step error inverts the rule:
+"the alibi starts at 21:09, before the window opens at 23:13, so it does not
+cover the window", when starting earlier is exactly what covering requires.
+
+Two conclusions follow. First, a larger model alone will not fix the case
+failures; the skill has to be taught. Second, the SFT traces were part of the
+problem: they state conclusions such as "covering the whole window, so S4 is
+ruled out" without showing the comparison, so a model can copy the
+conclusion without learning to reach it. The next step is traces that show
+every comparison explicitly (start before the window opens, end after it
+closes, with times converted to minutes across midnight), a short curriculum
+on the comparison itself, and per-suspect structured answers so the reward
+checks each coverage decision.
+
 ## 6. Training pipeline
 
 - **SFT warm-up.** Reasoning traces are written from the solver's facts in a
