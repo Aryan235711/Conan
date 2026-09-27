@@ -90,6 +90,19 @@ all 2,600 cases in the four splits pass.
 The out-of-distribution split draws names, places, alibi locations and
 phrasings from a pool that never appears in training, at the hardest level.
 
+Two more families use the same recipe. In **which witness is lying**,
+several witnesses describe where they were and whom they saw, reliable
+records pin some people to places, and exactly one witness lies. The lie is
+either contradicted by the liar's own record or hidden in an "I saw X" claim
+that only a record about X contradicts. An independent backtracking search
+over concrete worlds re-checks every case. The **combined** family chains
+both: every key holder's alibi comes from a witness, the witness covering for
+the culprit is lying, and a record exposes them. Solving it takes four steps
+in order: fix the window, catch the liar, void their alibi, then apply access
+and the remaining alibis. Combined cases average 29 evidence lines and nine
+decisive clues. In every family each person is named the same number of
+times, so counting names reveals nothing.
+
 ## 4. Leakage probes
 
 A benchmark is only as good as its resistance to shortcuts, so the harness
@@ -111,9 +124,9 @@ passes a case, which is the intended behaviour.
 ## 5. Results
 
 All runs were on an Apple M2 laptop with 16 GB of memory, with greedy
-decoding (temperature 0). Each model saw the same first 20 cases of each
-generated split and the six gold cases. Accuracy is shown with a Wilson 95%
-interval. Chance accuracy on the generated splits is about 23%.
+decoding (temperature 0). Accuracy is shown with a Wilson 95% interval.
+Chance accuracy is about 23% on the in-distribution split and 16.7% on the
+held-out split, which has six scenarios per case.
 
 ### Baselines and probes (200 cases per split)
 
@@ -128,20 +141,38 @@ interval. Chance accuracy on the generated splits is about 23%.
 No baseline passes a single case. The solver scoring 1.00 confirms that a
 perfect answer reaches the scorer's ceiling.
 
-### Models (20 cases per split)
+### Models on the held-out split (200 cases)
 
-| Model | Gold accuracy | In-distribution accuracy | Held-out accuracy | Held-out reward | Held-out valid format |
-|---|---|---|---|---|---|
-| Qwen2.5 0.5B Instruct, untrained | 33% (10-70) | 30% (15-52) | 5% (1-24) | 0.06 | 55% |
-| Qwen2.5 0.5B, SFT | 17% (3-56) | 55% (34-74) | 45% (26-66) | 0.41 | 100% |
-| Qwen2.5 Coder 7B, untrained | 67% (30-90) | 25% (11-47) | 5% (1-24) | 0.16 | 85% |
-| DeepSeek-R1 8B | not completed | | | | |
+| Model | Accuracy | Accuracy when the answer parses | Valid format | Time-window score | Red-herring score | Mean reward |
+|---|---|---|---|---|---|---|
+| Qwen2.5 0.5B Instruct, untrained | 12.5% (9-18) | 22.3% | 56% | 0.01 | 0.08 | 0.05 |
+| Qwen2.5 0.5B, SFT | 24.0% (19-30) | 24.7% | 97% | 0.41 | 0.41 | 0.26 |
 
-**The warm-up transfers to held-out vocabulary.** The fine-tuned 0.5B model
-went from 5% to 45% on the held-out split, and the intervals do not overlap.
-It learned the method, not the names: held-out cases use names, places and
-alibi phrasings that never appear in training. Valid output went from 55% to
-100%, and the time-window score rose from 0.00 to 0.41.
+### Models on smaller samples (20 cases per split, 6 gold cases)
+
+| Model | Gold accuracy | In-distribution accuracy | Held-out accuracy |
+|---|---|---|---|
+| Qwen2.5 0.5B Instruct, untrained | 33% (10-70) | 30% (15-52) | 5% (1-24) |
+| Qwen2.5 0.5B, SFT | 17% (3-56) | 55% (34-74) | 45% (26-66) |
+| Qwen2.5 Coder 7B, untrained | 67% (30-90) | 25% (11-47) | 5% (1-24) |
+| DeepSeek-R1 8B | not completed | | |
+
+**A 20-case sample overstated the gain.** On the first 20 held-out cases the
+fine-tuned model scored 45% against 5% for the untrained one, and an earlier
+version of this report presented that as the result. On all 200 cases it
+scores 24% against 12.5%. The first 20 were an unusually favourable sample
+for the fine-tuned model and an unusually unfavourable one for the base
+model. The lesson is to size evaluations before drawing conclusions.
+
+**SFT teaches the format and the arithmetic, not the deduction.** Most of the
+accuracy gain comes from producing a valid answer: valid format rises from
+56% to 97%. Among answers that parse, accuracy moves only from 22.3% to
+24.7%, a little above the 16.7% chance level. What the warm-up does teach
+shows in the components: the time-window score rises from 0.01 to 0.41 and
+the red-herring score from 0.08 to 0.41. The model learns to compute the
+window and to set aside motives and noise, but not to carry the chain all the
+way to the right suspect. Held-out names, places and phrasings do not hurt
+it, so what it learned is the method rather than the vocabulary.
 
 **The 7B model reasons fluently but not correctly.** Qwen2.5 Coder 7B did
 best on the six gold cases, whose prose resembles ordinary detective
@@ -151,14 +182,17 @@ a sixteen-hour window. In another it refused to commit, set its answer to
 null and gave even odds after contradicting itself. Both earn zero or near
 zero, as they should.
 
-**The fine-tuned model's errors are bookkeeping, not arithmetic.** It usually
-gets the time window exactly right. Its typical failure is losing track of
-which name belongs to which scenario ID: it rules a suspect out twice under
-two IDs and then names the same suspect as the culprit under a third. All 16
-consistency violations in its test answers were of one kind, the same clue
-cited both as decisive and as a red herring. This is the behaviour the RL
-stage should target, since the reward pays only for correct conclusions and
-halves self-contradictory answers.
+**The fine-tuned model's errors are mostly bookkeeping.** Its windows usually
+overlap the true window, but only 24 of its 194 parseable answers get the
+window exactly. A typical failure is losing track of which name belongs to
+which scenario ID: in one case it ruled a suspect out twice under two IDs and
+then named the same suspect as the culprit under a third. 123 of its 200
+answers break a consistency rule, and every one of them the same way: a clue
+cited both as decisive and as a red herring. The untrained model breaks the
+rules differently, most often by naming a culprit it has also ruled out
+(104 of 200). This is the behaviour the RL stage should target, since the
+reward pays only for correct conclusions and halves self-contradictory
+answers.
 
 **The warm-up is narrow.** On the six hand-written gold cases the fine-tuned
 model did slightly worse than the untrained one. The method it learned is
@@ -196,11 +230,14 @@ an interrupted run keeps its progress.
 
 ## 7. Limitations and next steps
 
-- One reasoning family. Time windows, access and alibis are covered; motive
-  chains, physical mechanisms and testimony consistency need their own
-  simulators.
-- Scale. Local runs used small models and small samples on a laptop. A full
-  GRPO run needs a GPU; the scripts are ready for one.
+- Three reasoning families. Timeline and access, which witness is lying,
+  and a combination of the two are covered. Physical mechanisms and
+  probabilistic cases like C006 still need their own simulators.
+- Scale. Local runs used small models on a laptop. Only the held-out split
+  was evaluated on 200 cases; other model numbers use 20 cases. A full GRPO
+  run needs a GPU, and `training/gpu_run.sh` runs it end to end.
+- Evaluation size. A 20-case sample overstated the SFT gain by nearly a
+  factor of two. Claims should come from 200 cases or more.
 - Process quality. The verifiable reward checks conclusions and cited
   evidence, not the prose in between. Scoring the prose needs an LLM judge
   validated against human labels, which has not been done yet.
