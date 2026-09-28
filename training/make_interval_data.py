@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "benchmarks"))
 
-from coverage_text import clock, covers, explain_coverage  # noqa: E402
+from coverage_text import clock, covers, explain_coverage, explain_coverage_compact  # noqa: E402
 from interval_probe import make_items  # noqa: E402
 
 TEMPLATES = [
@@ -34,7 +34,7 @@ TEMPLATES = [
 ]
 
 
-def build(n: int, seed: int) -> list[dict]:
+def build(n: int, seed: int, compact: bool = False) -> list[dict]:
     rng = random.Random(seed)
     probe_keys = {(x["a"], x["b"], x["lo"], x["hi"]) for x in make_items(200, seed=0)}
     rows, attempt = [], 0
@@ -48,7 +48,8 @@ def build(n: int, seed: int) -> list[dict]:
                 continue
             q = rng.choice(TEMPLATES).format(A=clock(it["a"]), B=clock(it["b"]), L=clock(it["lo"]), H=clock(it["hi"]))
             ans = "yes" if covers(*key) else "no"
-            work = "\n".join(explain_coverage(*key)) + f"\nAnswer: {ans}"
+            steps = explain_coverage_compact(*key) if compact else explain_coverage(*key)
+            work = "\n".join(steps) + f"\nAnswer: {ans}"
             rows.append({"prompt": [{"role": "user", "content": q}],
                          "completion": [{"role": "assistant", "content": work}],
                          "answer": ans, "kind": it["kind"]})
@@ -59,9 +60,10 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--n", type=int, default=3000)
     ap.add_argument("--seed", type=int, default=7)
+    ap.add_argument("--compact", action="store_true", help="shorter worked answers matching compact case traces")
     ap.add_argument("--out", default=str(ROOT / "data" / "generated" / "sft_interval.jsonl"))
     args = ap.parse_args()
-    rows = build(args.n, args.seed)
+    rows = build(args.n, args.seed, args.compact)
     with open(args.out, "w", encoding="utf-8") as f:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")

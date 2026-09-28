@@ -46,11 +46,15 @@ def covers(a: int, b: int, lo: int, hi: int) -> bool:
     return a <= lo and b >= hi
 
 
-def explain_coverage(a: int, b: int, lo: int, hi: int, who: str = "the alibi") -> list[str]:
-    """Lines that work out whether the interval [a, b] covers [lo, hi]."""
+def explain_coverage(a: int, b: int, lo: int, hi: int, who: str = "the alibi", rewrite: bool = True) -> list[str]:
+    """Lines that work out whether the interval [a, b] covers [lo, hi].
+
+    With rewrite=False the midnight rewrite line is omitted; use it when the
+    rule has already been stated once earlier in the same trace.
+    """
     lines = []
     moved = [t for t in (a, b, lo, hi) if clock(t) != night(t)]
-    if moved:
+    if moved and rewrite:
         seen = []
         for t in moved:
             if t not in seen:
@@ -68,4 +72,31 @@ def explain_coverage(a: int, b: int, lo: int, hi: int, who: str = "the alibi") -
     else:
         failed = "start" if not start_ok else "end"
         lines.append(f"The {failed} check fails, so it does not cover the whole window.")
+    return lines
+
+
+def _cmp_short(x: int, y: int) -> str:
+    hx, mx, hy, my = 12 + x // 60, x % 60, 12 + y // 60, y % 60
+    if x == y:
+        return "same time"
+    if hx != hy:
+        return f"{hx} {'<' if hx < hy else '>'} {hy}"
+    return f"{hx} = {hy}, {mx:02d} {'<' if mx < my else '>'} {my:02d}"
+
+
+def explain_coverage_compact(a: int, b: int, lo: int, hi: int, rewrite: bool = True) -> list[str]:
+    """Same reasoning as explain_coverage in about half the tokens."""
+    lines = []
+    moved = []
+    for t in (a, b, lo, hi):
+        if clock(t) != night(t) and t not in moved:
+            moved.append(t)
+    if moved and rewrite:
+        lines.append("After midnight add 24 to the hour: " + ", ".join(f"{clock(t)} is {night(t)}" for t in moved) + ".")
+    start_ok, end_ok = a <= lo, b >= hi
+    s_rel = "same" if a == lo else ("earlier" if a < lo else "later")
+    e_rel = "same" if b == hi else ("later" if b > hi else "earlier")
+    lines.append(f"Start {night(a)} vs window {night(lo)}: {_cmp_short(a, lo)}, so {s_rel}. Starts in time: {'yes' if start_ok else 'no'}.")
+    lines.append(f"End {night(b)} vs window {night(hi)}: {_cmp_short(b, hi)}, so {e_rel}. Ends in time: {'yes' if end_ok else 'no'}.")
+    lines.append("Covers the window." if start_ok and end_ok else "Does not cover the window.")
     return lines

@@ -34,7 +34,23 @@ from detective_engine.evaluate import agent_solver  # noqa: E402
 from detective_engine.generator import BODY_TEMP, COOLING_PER_HOUR, ESTIMATE_TOLERANCE, Fact, death_window, fmt  # noqa: E402
 
 sys.path.insert(0, str(ROOT / "training"))
-from coverage_text import explain_coverage  # noqa: E402
+from coverage_text import explain_coverage, explain_coverage_compact, night  # noqa: E402
+
+# Compact traces (--compact): state the midnight rule once, list red herrings
+# by ID only, and write the final JSON on one line. Keeps hard cases under
+# about 1024 output tokens so small models finish their answer.
+COMPACT = False
+
+
+def _midnight_note(lo: int, hi: int) -> str:
+    return (f"Times after midnight get 24 added to the hour so they stay in order; "
+            f"the window in these terms is {night(lo)} to {night(hi)}.")
+
+
+def _answer_block(answer: dict) -> str:
+    if COMPACT:
+        return "\n```json\n" + json.dumps(answer, separators=(", ", ": ")) + "\n```"
+    return "\n```json\n" + json.dumps(answer, indent=2) + "\n```"
 
 
 def write_liar_trace(raw: dict) -> str:
@@ -68,7 +84,7 @@ def write_liar_trace(raw: dict) -> str:
         lines.append(f"{eid[i]}: describes behaviour or background, not where anyone was, so it proves nothing.")
     answer = agent_solver(case, "", raw)
     lines.append(f"\nConclusion: {liar} ({sid[liar]}) is lying.")
-    lines.append("\n```json\n" + json.dumps(answer, indent=2) + "\n```")
+    lines.append(_answer_block(answer))
     return "\n".join(lines)
 
 
@@ -91,6 +107,8 @@ def write_composite_trace(raw: dict) -> str:
     for f in by("last_alive"):
         lines.append(f"{eid[id(f)]}: the victim was alive at {fmt(f.data['time'])}.")
     lines.append(f"So the death window is {fmt(lo)} to {fmt(hi)}.")
+    if COMPACT:
+        lines.append(_midnight_note(lo, hi))
     for f in by("homicide"):
         lines.append(f"{eid[id(f)]} rules out an accident ({label_of['accident']}).")
 
@@ -124,20 +142,25 @@ def write_composite_trace(raw: dict) -> str:
             lines.append(f"{eid[id(c)]}: {d['suspect']}'s alibi came from the liar, so {d['suspect']} is not cleared.")
         else:
             lines.append(f"{eid[id(c)]}: {d['witness']} vouches for {d['suspect']} from {fmt(d['start'])} to {fmt(d['end'])}.")
-            lines += explain_coverage(d["start"], d["end"], lo, hi, who=f"{d['suspect']}'s alibi")
+            lines += (explain_coverage_compact(d["start"], d["end"], lo, hi, rewrite=False) if COMPACT
+                      else explain_coverage(d["start"], d["end"], lo, hi, who=f"{d['suspect']}'s alibi"))
             if d["start"] <= lo and d["end"] >= hi:
                 lines.append(f"So {d['suspect']} ({label_of[d['suspect']]}) is ruled out.")
             else:
                 lines.append(f"So this alibi does not clear {d['suspect']}.")
 
     herr = [f for f in facts if f.role == "herring"]
-    lines.append("\nStep 5 - Red herrings.")
-    for f in herr:
-        lines.append(f"{eid[id(f)]}: " + ("a motive for someone already excluded; motive alone proves nothing."
-                                          if f.kind == "motive" else "behaviour or background, not evidence of who or when."))
+    if COMPACT:
+        lines.append("\nStep 5 - Red herrings: " + ", ".join(eid[id(f)] for f in herr)
+                     + " (motives of people already excluded, behaviour, or background noise).")
+    else:
+        lines.append("\nStep 5 - Red herrings.")
+        for f in herr:
+            lines.append(f"{eid[id(f)]}: " + ("a motive for someone already excluded; motive alone proves nothing."
+                                              if f.kind == "motive" else "behaviour or background, not evidence of who or when."))
     answer = agent_solver(case, "", raw)
     lines.append(f"\nConclusion: {culprit} ({answer['most_likely']}) had a key and no truthful alibi for the whole window.")
-    lines.append("\n```json\n" + json.dumps(answer, indent=2) + "\n```")
+    lines.append(_answer_block(answer))
     return "\n".join(lines)
 
 
@@ -170,6 +193,8 @@ def write_trace(raw: dict) -> str:
     for f in by_kind.get("last_alive", []):
         lines.append(f"{eid[id(f)]}: the victim was alive at {fmt(f.data['time'])}.")
     lines.append(f"So the death window is {fmt(lo)} to {fmt(hi)}.")
+    if COMPACT:
+        lines.append(_midnight_note(lo, hi))
 
     # 2. accident
     if "accident" in label_of:
@@ -197,7 +222,8 @@ def write_trace(raw: dict) -> str:
             continue
         a, b = f.data["start"], f.data["end"]
         lines.append(f"{eid[id(f)]}: {name} is verified from {fmt(a)} to {fmt(b)}.")
-        lines += explain_coverage(a, b, lo, hi, who=f"{name}'s alibi")
+        lines += (explain_coverage_compact(a, b, lo, hi, rewrite=False) if COMPACT
+                  else explain_coverage(a, b, lo, hi, who=f"{name}'s alibi"))
         if a <= lo and b >= hi:
             lines.append(f"So {name} ({label_of[name]}) is ruled out.")
         else:
@@ -209,7 +235,10 @@ def write_trace(raw: dict) -> str:
 
     # 5. red herrings
     herrings = [f for f in facts if f.role == "herring"]
-    if herrings:
+    if herrings and COMPACT:
+        lines.append("\nStep 5 - Red herrings: " + ", ".join(eid[id(f)] for f in herrings)
+                     + " (motives of people already excluded, or noise with an innocent explanation).")
+    elif herrings:
         lines.append("\nStep 5 - Red herrings.")
         for f in herrings:
             if f.kind == "motive":
@@ -222,7 +251,7 @@ def write_trace(raw: dict) -> str:
     top = answer["most_likely"]
     culprit = next(n for n, s in label_of.items() if s == top)
     lines.append(f"\nConclusion: only {culprit} ({top}) had a key and no verified alibi for the whole window.")
-    lines.append("\n```json\n" + json.dumps(answer, indent=2) + "\n```")
+    lines.append(_answer_block(answer))
     return "\n".join(lines)
 
 
@@ -232,7 +261,10 @@ def main() -> None:
                     help="one or more comma-separated JSONL files, e.g. train.jsonl,liar_train.jsonl")
     ap.add_argument("--out", default=str(ROOT / "data" / "generated" / "sft_train.jsonl"))
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--compact", action="store_true", help="shorter traces that fit small output budgets")
     args = ap.parse_args()
+    global COMPACT
+    COMPACT = args.compact
     raws = [json.loads(l) for path in args.train.split(",") for l in open(path, encoding="utf-8") if l.strip()]
     if args.limit:
         raws = raws[:args.limit]
