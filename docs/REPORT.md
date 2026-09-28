@@ -372,6 +372,48 @@ learned the format of tracking but not consistent bookkeeping. SFT v5 keeps
 tracking, returns to the verbose comparison, and uses all 2,000 timeline
 traces.
 
+### SFT v5: verbose comparisons, state tracking, and enough examples
+
+v5 combines what worked: the verbose comparison that names each value (100%
+on the probe), the "still possible" list from v4, and all 2,000 timeline
+traces instead of 400, plus 600 curriculum items. It trained for 650 steps
+(4.5 hours on the M2) and was evaluated with a 1,792-token budget.
+
+| Held-out, 200 cases | SFT v1 | SFT v4 | SFT v5 |
+|---|---|---|---|
+| Accuracy | 24.0% (19-30) | 28.5% (23-35) | **83.5% (78-88)** |
+| Pass rate | 10.5% | 19.0% | 81.0% |
+| Mean reward | 0.26 | 0.35 | 0.86 |
+| Time-window score | 0.40 | 0.51 | 0.97 |
+| Evidence score | 0.47 | 0.44 | 0.90 |
+| Red-herring score | 0.39 | 0.35 | 0.81 |
+| Self-contradicting answers | 61% | 23% | 4% |
+| Every elimination step right | 24% | 1% | 83% |
+| Culprit kept in the final answer | 27% | 46% | 83% |
+| Probe, step by step | 42% | 69% | 100% |
+
+This is the first decisive improvement: the intervals are far apart, and
+every component of the reward rose together. Whenever v5 gets every
+elimination step right, its final answer is right, as for every earlier
+model; the difference is that it now gets the steps right 83% of the time.
+The remaining errors are mostly alibi eliminations (84% of answers rule out
+every covered suspect) and a residual 10% of answers where the trace keeps
+the culprit and the final answer drops them.
+
+Two checks guard against a false result. No test-set name appears anywhere
+in the training data (0 of 191), and the only evidence lines shared between
+training and test are generic sentences used by every case, such as the
+injury that rules out an accident. A read of the answers confirms the model
+follows the method: it fixes the window, applies access, works through each
+alibi comparison, updates the list of remaining suspects, and concludes from
+the last one standing.
+
+What made the difference was diagnosis, not more training of the same kind.
+Expert iteration on the original traces could not fix a skill the traces
+never showed; the error breakdown located the failing step, the probe showed
+the skill was missing in every model tested, and each later version changed
+the training data to target a specific measured failure.
+
 ## 6. Training pipeline
 
 - **SFT warm-up.** Reasoning traces are written from the solver's facts in a

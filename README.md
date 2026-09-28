@@ -17,36 +17,38 @@ Transformers, TRL and PEFT in a separate environment.
 ## Results
 
 Held-out split: 200 cases with names, places and phrasing never seen in
-training, at the hardest difficulty. Chance accuracy is 16.7%. Local runs on
-an Apple M2 laptop with 16 GB of memory; 95% Wilson intervals in brackets.
+training, at the hardest difficulty. Chance accuracy is 16.7%. Everything
+ran on an Apple M2 laptop with 16 GB of memory; 95% Wilson intervals in
+brackets.
 
-| Agent | Cases | Accuracy | Valid format | Mean reward |
+| Model | Accuracy | Pass rate | Mean reward | Self-contradicting |
 |---|---|---|---|---|
-| Solver upper bound | 200 | 100% | 100% | 1.00 |
-| Most-mentioned suspect, leakage probe | 200 | 23% (18-29) | 100% | 0.11 |
-| Qwen2.5 0.5B Instruct, untrained | 200 | 12.5% (9-18) | 56% | 0.05 |
-| Qwen2.5 0.5B, SFT on solver traces | 200 | 24% (19-30) | 97% | 0.26 |
-| Qwen2.5 Coder 7B via Ollama, untrained | 20 | 5% (1-24) | 85% | 0.16 |
+| Solver upper bound | 100% | 100% | 1.00 | 0% |
+| Qwen2.5 0.5B Instruct, untrained | 12.5% (9-18) | 0% | 0.05 | 53% |
+| Qwen2.5 0.5B, first SFT | 24.0% (19-30) | 10.5% | 0.26 | 61% |
+| Qwen2.5 0.5B, three rounds of expert iteration | 24.0% (19-30) | 14.5% | 0.29 | 45% |
+| **Qwen2.5 0.5B, SFT v5** | **83.5% (78-88)** | **81.0%** | **0.86** | **4%** |
+| Qwen2.5 Coder 7B, untrained (20 cases) | 5% (1-24) | 0% | 0.16 | |
 
-Supervised fine-tuning on solver-written traces doubles accuracy, but most
-of that gain is format: among answers that parse, accuracy moves only from
-22% to 25%, a little above chance. What SFT does teach is the time
-arithmetic (time-window score 0.01 to 0.41) and spotting red herrings (0.08
-to 0.41). Picking the culprit, which needs every step to be right, is still
-unsolved at this size. That is the job of the RL stage, since the verifiable
-reward pays for the correct conclusion directly. The timeline-trained model
-also shows no transfer to the which-witness-is-lying family, where it scores
-30% against 26% chance on 50 cases. A first run on 20 cases
-suggested 45% for the SFT model; the 200-case run corrected it, and both are
-documented in the report.
+The path to 83.5% came from diagnosis rather than more training:
 
-Three rounds of expert iteration on the Mac, a reward-filtered self-training
-method that fits in 16 GB, made the model more consistent but did not raise
-held-out accuracy (best round 24.0%, same as SFT). A step-by-step error
-analysis found why: the model treats any verified alibi as clearing a
-suspect, without comparing its times with the death window, so it rules out
-the real culprit about three times in four. Whenever every elimination step
-is right, the final pick is right. See [docs/REPORT.md](docs/REPORT.md).
+1. A step-by-step error analysis showed models ruled out the real culprit
+   about three times in four, because they treated any verified alibi as
+   clearing a suspect without checking its times against the death window.
+2. A micro-skill probe showed no model tested, up to 7B, could decide
+   whether an alibi covers a time window (42-56%, chance 50%).
+3. A short curriculum of worked comparisons taught the skill: 42% to 99% on
+   the probe after 18 minutes of training.
+4. Case traces were rewritten to show every comparison, and to list the
+   suspects still possible after each step so the conclusion reads off the
+   last one standing.
+5. With 2,000 such traces the model gets every elimination step right in 83%
+   of held-out cases, and when every step is right the answer is right.
+
+Expert iteration, a reward-filtered self-training loop that fits on a laptop,
+made the first model more consistent but did not raise accuracy: it
+reinforced the alibi shortcut instead of fixing it. Full details, including
+a 20-case result that was later corrected, are in [docs/REPORT.md](docs/REPORT.md).
 
 ## Why a verifiable reward
 
@@ -166,6 +168,11 @@ docs/REPORT.md              write-up: audit, design, results, limitations
 
 ## Limitations
 
+- The 83.5% result is for the timeline family, which the model was trained on
+  with new names, places and phrasing held out. It has not yet been trained or
+  tested on the lying-witness or combined families.
+- The model learned a procedure from solver-written traces. That is the point
+  of the exercise, but it means the traces define the method it follows.
 - Three reasoning families so far. Physical mechanisms and probabilistic
   cases like C006 still need their own simulators.
 - The six gold cases are hand-written and their answer keys were written by
