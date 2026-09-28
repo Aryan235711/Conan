@@ -43,6 +43,10 @@ COMPACT = False
 # State tracking (--track): list the suspects still possible after each step,
 # so the conclusion reads off the one left instead of relying on memory.
 TRACK = False
+# Verbose comparison inside compact traces (--verbose-compare): names each value
+# ("the alibi starts 22:50, the window opens 23:05"). SFT v4 showed the terse
+# comparison leads to copying errors; the verbose one scored 100% on the probe.
+VERBOSE_COMPARE = False
 
 
 def _still(remaining: list[tuple[str, str]], label: str = "Still possible") -> str:
@@ -155,7 +159,7 @@ def write_composite_trace(raw: dict) -> str:
             lines.append(f"{eid[id(c)]}: {d['suspect']}'s alibi came from the liar, so {d['suspect']} is not cleared.")
         else:
             lines.append(f"{eid[id(c)]}: {d['witness']} vouches for {d['suspect']} from {fmt(d['start'])} to {fmt(d['end'])}.")
-            lines += (explain_coverage_compact(d["start"], d["end"], lo, hi, rewrite=False) if COMPACT
+            lines += (explain_coverage_compact(d["start"], d["end"], lo, hi, rewrite=False) if COMPACT and not VERBOSE_COMPARE
                       else explain_coverage(d["start"], d["end"], lo, hi, who=f"{d['suspect']}'s alibi"))
             if d["start"] <= lo and d["end"] >= hi:
                 lines.append(f"So {d['suspect']} ({label_of[d['suspect']]}) is ruled out.")
@@ -250,7 +254,7 @@ def write_trace(raw: dict) -> str:
             continue
         a, b = f.data["start"], f.data["end"]
         lines.append(f"{eid[id(f)]}: {name} is verified from {fmt(a)} to {fmt(b)}.")
-        lines += (explain_coverage_compact(a, b, lo, hi, rewrite=False) if COMPACT
+        lines += (explain_coverage_compact(a, b, lo, hi, rewrite=False) if COMPACT and not VERBOSE_COMPARE
                   else explain_coverage(a, b, lo, hi, who=f"{name}'s alibi"))
         if a <= lo and b >= hi:
             lines.append(f"So {name} ({label_of[name]}) is ruled out.")
@@ -298,9 +302,10 @@ def main() -> None:
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--compact", action="store_true", help="shorter traces that fit small output budgets")
     ap.add_argument("--track", action="store_true", help="list the suspects still possible after each step")
+    ap.add_argument("--verbose-compare", action="store_true", help="name each value in alibi comparisons")
     args = ap.parse_args()
-    global COMPACT, TRACK
-    COMPACT, TRACK = args.compact, args.track
+    global COMPACT, TRACK, VERBOSE_COMPARE
+    COMPACT, TRACK, VERBOSE_COMPARE = args.compact, args.track, args.verbose_compare
     raws = [json.loads(l) for path in args.train.split(",") for l in open(path, encoding="utf-8") if l.strip()]
     if args.limit:
         raws = raws[:args.limit]

@@ -345,6 +345,33 @@ such as combining the first name of one suspect with the surname of another.
 The next version adds explicit state tracking: after each step the trace
 lists the suspects still possible, so the conclusion reads off the one left.
 
+**SFT v4: compact traces with state tracking.** v4 used a shorter comparison
+("Start 21:38 vs window 22:08: 21 < 22, so earlier. Starts in time: yes"),
+listed red herrings by ID, and added "Still possible: ..." after each step.
+Evaluated with a 1,280-token budget:
+
+| Held-out, 200 cases | SFT v1 | SFT v2 | SFT v4 |
+|---|---|---|---|
+| Accuracy | 24.0% (19-30) | 23.5% (18-30) | 28.5% (23-35) |
+| Pass rate | 10.5% | 16.5% | 19.0% |
+| Valid format | 97% | 97% | 100% |
+| Culprit kept in the final answer | 27% | 24% | 46% |
+| Every elimination step right | 24% | 24% | 1% |
+| Probe, step by step | 42% | 100% | 69% |
+
+State tracking nearly doubled how often the culprit survives to the final
+answer, and accuracy is the best so far, though the interval still overlaps
+v1's. It also exposed new failures. The model invents alibi lines from other
+facts (once treating the victim and the discovery time as an alibi), lets
+the "still possible" list drift, and writes a final ruled-out list that
+matches its own last list in only 12 of 200 answers. On the probe, 40 of its
+61 misses are copying errors (the window start 23:05 written as 22:05): the
+terse comparison is easier to miscopy than the verbose one, which scored
+100%. With only 400 case traces in a mix that was 60% curriculum, the model
+learned the format of tracking but not consistent bookkeeping. SFT v5 keeps
+tracking, returns to the verbose comparison, and uses all 2,000 timeline
+traces.
+
 ## 6. Training pipeline
 
 - **SFT warm-up.** Reasoning traces are written from the solver's facts in a
