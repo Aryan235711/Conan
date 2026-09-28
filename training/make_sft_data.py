@@ -125,7 +125,36 @@ def write_composite_trace(raw: dict) -> str:
 
     lines.append("\nStep 2 - Find the lying witness by checking each alibi claim against the records.")
     liar = None
-    for c in by("witness_alibi"):
+    if VERBOSE_COMPARE:
+        # Every claim is checked against every record about the witness or the
+        # person they vouch for, so finding the liar is shown, not asserted.
+        for c in by("witness_alibi"):
+            d = c.data
+            lines.append(f"{eid[id(c)]}: {d['witness']} says they were with {d['suspect']} at {d['place']} "
+                         f"from {fmt(d['start'])} to {fmt(d['end'])}.")
+            false_claim = False
+            for r in by("record"):
+                rd = r.data
+                if rd["name"] not in (d["witness"], d["suspect"]):
+                    continue
+                t0, a0, b0 = rd["time"], d["start"], d["end"]
+                head = f"{eid[id(r)]}: {rd['name']} at {rd['place']} at {fmt(t0)}. "
+                if t0 < a0:
+                    lines.append(head + f"{night(t0)} < {night(a0)}, so before the claimed time; it does not test the claim.")
+                elif t0 > b0:
+                    lines.append(head + f"{night(t0)} > {night(b0)}, so after the claimed time; it does not test the claim.")
+                elif rd["place"] == d["place"]:
+                    lines.append(head + f"{night(a0)} <= {night(t0)} <= {night(b0)}, so inside the claimed time; same place, so it fits.")
+                else:
+                    lines.append(head + f"{night(a0)} <= {night(t0)} <= {night(b0)}, so inside the claimed time; "
+                                 f"different place ({rd['place']} vs {d['place']}), so the claim is false.")
+                    false_claim = True
+            if false_claim:
+                liar = d["witness"]
+                lines.append(f"So {d['witness']} is lying and this alibi does not count.")
+            else:
+                lines.append(f"So {d['witness']}'s claim fits the records.")
+    for c in ([] if VERBOSE_COMPARE else by("witness_alibi")):
         d = c.data
         for r in by("record"):
             rd = r.data
@@ -134,7 +163,8 @@ def write_composite_trace(raw: dict) -> str:
                 lines.append(f"{eid[id(c)]} says {d['witness']} and {d['suspect']} were at {d['place']} from "
                              f"{fmt(d['start'])} to {fmt(d['end'])}, but {eid[id(r)]} shows {rd['name']} at {rd['place']} "
                              f"at {fmt(rd['time'])}. So {d['witness']} is lying and this alibi does not count.")
-    lines.append("Every other alibi claim fits the records.")
+    if not VERBOSE_COMPARE:
+        lines.append("Every other alibi claim fits the records.")
 
     lines.append("\nStep 3 - Access.")
     remaining = sorted(((s, n) for n, s in label_of.items() if n != "accident"), key=lambda x: int(x[0][1:]))
