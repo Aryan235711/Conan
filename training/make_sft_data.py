@@ -40,6 +40,13 @@ from coverage_text import explain_coverage, explain_coverage_compact, night  # n
 # by ID only, and write the final JSON on one line. Keeps hard cases under
 # about 1024 output tokens so small models finish their answer.
 COMPACT = False
+# State tracking (--track): list the suspects still possible after each step,
+# so the conclusion reads off the one left instead of relying on memory.
+TRACK = False
+
+
+def _still(remaining: list[tuple[str, str]], label: str = "Still possible") -> str:
+    return f"{label}: " + ", ".join(f"{sid} {name}" for sid, name in remaining) + "."
 
 
 def _midnight_note(lo: int, hi: int) -> str:
@@ -126,12 +133,18 @@ def write_composite_trace(raw: dict) -> str:
     lines.append("Every other alibi claim fits the records.")
 
     lines.append("\nStep 3 - Access.")
+    remaining = sorted(((s, n) for n, s in label_of.items() if n != "accident"), key=lambda x: int(x[0][1:]))
+    if TRACK:
+        lines.append(_still(remaining, "Suspects"))
     kh = by("keyholders")[0]
     keyholders = set(kh.data["names"])
     lines.append(f"{eid[id(by('no_forced_entry')[0])]}: no forced entry, so the killer used a key. {eid[id(kh)]} lists the key holders.")
     for name, sid in label_of.items():
         if name != "accident" and name not in keyholders:
             lines.append(f"{name} ({sid}) has no key and is ruled out.")
+    remaining = [(s, n) for s, n in remaining if n in keyholders]
+    if TRACK:
+        lines.append(_still(remaining))
 
     lines.append(f"\nStep 4 - Truthful alibis against the window {fmt(lo)} to {fmt(hi)}.")
     culprit = None
@@ -149,6 +162,12 @@ def write_composite_trace(raw: dict) -> str:
             else:
                 lines.append(f"So this alibi does not clear {d['suspect']}.")
 
+    cleared = {c.data["suspect"] for c in by("witness_alibi")
+               if c.data["witness"] != liar and c.data["start"] <= lo and c.data["end"] >= hi}
+    remaining = [(s, n) for s, n in remaining if n not in cleared]
+    if TRACK:
+        lines.append(_still(remaining))
+
     herr = [f for f in facts if f.role == "herring"]
     if COMPACT:
         lines.append("\nStep 5 - Red herrings: " + ", ".join(eid[id(f)] for f in herr)
@@ -159,7 +178,10 @@ def write_composite_trace(raw: dict) -> str:
             lines.append(f"{eid[id(f)]}: " + ("a motive for someone already excluded; motive alone proves nothing."
                                               if f.kind == "motive" else "behaviour or background, not evidence of who or when."))
     answer = agent_solver(case, "", raw)
-    lines.append(f"\nConclusion: {culprit} ({answer['most_likely']}) had a key and no truthful alibi for the whole window.")
+    if TRACK:
+        lines.append(f"\nConclusion: only {answer['most_likely']} {culprit} is left, so {culprit} ({answer['most_likely']}) is the culprit.")
+    else:
+        lines.append(f"\nConclusion: {culprit} ({answer['most_likely']}) had a key and no truthful alibi for the whole window.")
     lines.append(_answer_block(answer))
     return "\n".join(lines)
 
@@ -205,6 +227,9 @@ def write_trace(raw: dict) -> str:
 
     # 3. access
     lines.append("\nStep 3 - Access.")
+    remaining = sorted(((s, n) for n, s in label_of.items() if n != "accident"), key=lambda x: int(x[0][1:]))
+    if TRACK:
+        lines.append(_still(remaining, "Suspects"))
     keyholders = set()
     nfe, kh = by_kind.get("no_forced_entry", []), by_kind.get("keyholders", [])
     if nfe and kh:
@@ -213,6 +238,9 @@ def write_trace(raw: dict) -> str:
         for name, sid in label_of.items():
             if name != "accident" and name not in keyholders:
                 lines.append(f"{name} ({sid}) has no key and is ruled out.")
+        remaining = [(s, n) for s, n in remaining if n in keyholders]
+    if TRACK:
+        lines.append(_still(remaining))
 
     # 4. alibis
     lines.append(f"\nStep 4 - Alibis against the window {fmt(lo)} to {fmt(hi)}.")
@@ -232,6 +260,10 @@ def write_trace(raw: dict) -> str:
         name = f.data["name"]
         if not keyholders or name in keyholders:
             lines.append(f"{eid[id(f)]}: {name}'s account is unverified testimony, so it does not clear them.")
+    cleared = {f.data["name"] for f in by_kind.get("alibi", []) if f.data["start"] <= lo and f.data["end"] >= hi}
+    remaining = [(s, n) for s, n in remaining if n not in cleared]
+    if TRACK:
+        lines.append(_still(remaining))
 
     # 5. red herrings
     herrings = [f for f in facts if f.role == "herring"]
@@ -250,7 +282,10 @@ def write_trace(raw: dict) -> str:
     answer = agent_solver(case, "", raw)
     top = answer["most_likely"]
     culprit = next(n for n, s in label_of.items() if s == top)
-    lines.append(f"\nConclusion: only {culprit} ({top}) had a key and no verified alibi for the whole window.")
+    if TRACK:
+        lines.append(f"\nConclusion: only {top} {culprit} is left, so {culprit} ({top}) is the culprit.")
+    else:
+        lines.append(f"\nConclusion: only {culprit} ({top}) had a key and no verified alibi for the whole window.")
     lines.append(_answer_block(answer))
     return "\n".join(lines)
 
@@ -262,9 +297,10 @@ def main() -> None:
     ap.add_argument("--out", default=str(ROOT / "data" / "generated" / "sft_train.jsonl"))
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--compact", action="store_true", help="shorter traces that fit small output budgets")
+    ap.add_argument("--track", action="store_true", help="list the suspects still possible after each step")
     args = ap.parse_args()
-    global COMPACT
-    COMPACT = args.compact
+    global COMPACT, TRACK
+    COMPACT, TRACK = args.compact, args.track
     raws = [json.loads(l) for path in args.train.split(",") for l in open(path, encoding="utf-8") if l.strip()]
     if args.limit:
         raws = raws[:args.limit]

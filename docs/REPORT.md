@@ -318,6 +318,33 @@ closes, with times converted to minutes across midnight), a short curriculum
 on the comparison itself, and per-suspect structured answers so the reward
 checks each coverage decision.
 
+### Explicit comparisons inside full cases
+
+SFT v2 was trained from the base model on 600 curriculum items plus 400 case
+traces that show every alibi comparison. Its answers are longer, so at the
+usual 1,024-token budget 68% were cut off before the final answer; the
+numbers below use a 2,048-token budget.
+
+| Held-out, 200 cases | SFT v1 | SFT v2, explicit comparisons |
+|---|---|---|
+| Accuracy | 24.0% (19-30) | 23.5% (18-30) |
+| Pass rate | 10.5% | 16.5% |
+| Mean reward | 0.26 | 0.38 |
+| Time window right | 21% | 59% |
+| Self-contradicting answers | 61% | 32% |
+| Trace keeps the culprit | 8% | 44% |
+| Trace keeps the culprit, final answer drops them | 4% | 31% |
+| Probe, step by step | 42% | 100% |
+
+The explicit comparisons fixed the reasoning: the written trace now keeps the
+culprit in 44% of answers instead of 8%, and the window is right three times
+as often. Accuracy did not move because the gain is lost between the trace
+and the final answer. In 31% of answers the trace says the culprit is not
+cleared and the final answer rules them out anyway, often after a name mix-up
+such as combining the first name of one suspect with the surname of another.
+The next version adds explicit state tracking: after each step the trace
+lists the suspects still possible, so the conclusion reads off the one left.
+
 ## 6. Training pipeline
 
 - **SFT warm-up.** Reasoning traces are written from the solver's facts in a

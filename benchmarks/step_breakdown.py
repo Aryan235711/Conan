@@ -77,6 +77,12 @@ def analyse(run_dir: Path, raw: dict[str, dict], split: str) -> dict:
             kind = "verified alibi outside the window"
         else:
             kind = "verified alibi covering part of the window"
+        # Did the written reasoning keep the culprit, only for the final answer to drop them?
+        body = rec["raw_output"].split("```")[0]
+        trace_kept = (f"does not clear {culprit}" in body or f"{culprit}'s account is unverified" in body
+                      or f"{culprit}'s alibi came from the liar" in body)
+        c["trace_kept_culprit"] += trace_kept
+        c["trace_kept_but_answer_dropped"] += trace_kept and not ok["culprit_kept"]
         kind_kept[kind][0] += ok["culprit_kept"]
         kind_kept[kind][1] += 1
         w = "window right" if ok["window_ok"] else "window wrong"
@@ -102,6 +108,11 @@ def main() -> None:
         vals = [res["counts"][c] / n for c in cols]
         cg = res["counts"]["correct_given_steps"] / max(1, res["n_steps"])
         print(f"{Path(r).name[-44:]:44} {res['n']:>4} " + " ".join(f"{v:13.2f}" for v in vals) + f" {cg:13.2f}")
+    print("\nWritten reasoning vs final answer for the culprit:")
+    for r, res in results:
+        n = max(1, res["n"])
+        print(f"  {Path(r).name[-44:]:44} trace keeps culprit {res['counts']['trace_kept_culprit'] / n:.2f}, "
+              f"trace keeps but final answer drops {res['counts']['trace_kept_but_answer_dropped'] / n:.2f}")
     print("\nCulprit kept (not ruled out), by the culprit's whereabouts line and by window correctness:")
     for r, res in results:
         print(f"  {Path(r).name[-60:]}")
