@@ -7,7 +7,8 @@ Agents:
                       a leakage probe: if it wins, surface frequency gives the answer away
     unverified        picks a suspect whose alibi is only testimony; a second leakage probe
     solver            reads the generator's structured facts (generated cases
-                      only); an upper bound that validates the scorer's ceiling
+                      only); an upper bound that validates the scorer's ceiling.
+                      On the reliability split it answers from the verified key.
     ollama:<model>    a local model through the Ollama HTTP API
     hf:<path|repo>    a Hugging Face model or trained LoRA adapter (needs torch)
 
@@ -42,6 +43,7 @@ from .generator import death_window, fmt, load_cases, solve, Fact
 ROOT = Path(__file__).resolve().parent.parent
 RUNS = ROOT / "runs"
 DATA = ROOT / "data" / "generated"
+RELIABILITY = ROOT / "benchmarks" / "reliability" / "cases.jsonl"
 
 
 # ---------------------------------------------------------------------------
@@ -52,6 +54,10 @@ def load_split(name: str) -> list[CaseDefinition]:
     if name == "gold":
         cases, _ = CaseLoader().load_all()
         return sorted([c for c in cases if c.answer_key is not None], key=lambda c: c.id)
+    if name == "reliability":
+        if not RELIABILITY.exists():
+            sys.exit(f"{RELIABILITY} not found. Run: python3 benchmarks/reliability/build.py")
+        return load_cases(RELIABILITY)
     path = DATA / f"{name}.jsonl"
     if not path.exists():
         sys.exit(f"{path} not found. Run: python3 -m detective_engine.generator")
@@ -59,7 +65,7 @@ def load_split(name: str) -> list[CaseDefinition]:
 
 
 def _raw_generated(name: str) -> dict[str, dict]:
-    path = DATA / f"{name}.jsonl"
+    path = RELIABILITY if name == "reliability" else DATA / f"{name}.jsonl"
     if name == "gold" or not path.exists():
         return {}
     with open(path, encoding="utf-8") as f:
@@ -128,7 +134,18 @@ def agent_unverified(case, prompt, raw):
 
 def agent_solver(case, prompt, raw):
     """Upper bound: solves from the generator's structured facts."""
-    if not raw:
+    if raw and "reliability" in raw:
+        # Reliability cases group several facts per paragraph and include tier B
+        # cases no solver covers, so the ceiling agent answers from the verified key.
+        k = raw["answer_key"]
+        n = len(case.scenarios)
+        probs = k.get("posteriors") or {f"S{i}": float(f"S{i}" == k["true_scenario"]) for i in range(1, n + 1)}
+        ans = {"most_likely": k["true_scenario"], "probabilities": probs, "ruled_out": k["ruled_out"],
+               "key_evidence": k["key_evidence"], "red_herrings": k["red_herrings"]}
+        if k.get("time_window"):
+            ans["time_window"] = {"earliest": k["time_window"]["earliest"], "latest": k["time_window"]["latest"]}
+        return ans
+    if not raw or "generator" not in raw:
         return agent_uniform(case, prompt, raw)
     facts = [Fact(f["kind"], f["text"], f["data"], f["role"]) for f in raw["generator"]["facts"]]
     if raw["generator"].get("family") == "composite":
@@ -336,6 +353,7 @@ def report(runs_dir: Path = RUNS) -> str:
         for f in sorted(agent_dir.glob("*.jsonl")):
             with open(f, encoding="utf-8") as fh:
                 recs = [json.loads(l) for l in fh if l.strip()]
+            recs = [r for r in recs if "correct" in r]   # skip non-case files such as probe results
             if recs:
                 rows.append((recs[0]["agent"], f.stem, summarize(recs)))
     order = {"gold": 0, "test_id": 1, "test_ood": 2, "val": 3, "train": 4}
