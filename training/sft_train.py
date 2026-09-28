@@ -36,6 +36,10 @@ def main() -> None:
     ap.add_argument("--output", default=str(ROOT / "runs" / "sft" / "run"))
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--smoke", action="store_true")
+    ap.add_argument("--gradient-checkpointing", action="store_true",
+                    help="recompute activations instead of storing them; needed for long examples on a 16 GB Mac")
+    ap.add_argument("--save-steps", type=int, default=None, help="checkpoint interval (default: half the run)")
+    ap.add_argument("--resume", action="store_true", help="resume from the latest checkpoint in --output")
     args = ap.parse_args()
     if args.smoke:
         args.max_steps, args.grad_accum, args.limit = 2, 1, 4
@@ -44,7 +48,7 @@ def main() -> None:
     import torch
     from datasets import Dataset
     from peft import LoraConfig
-    from transformers import AutoModelForCausalLM
+    from transformers import AutoModelForCausalLM, TrainerCallback
     from trl import SFTConfig, SFTTrainer
 
     rows = [json.loads(l) for l in open(args.data, encoding="utf-8") if l.strip()]
@@ -66,15 +70,28 @@ def main() -> None:
         warmup_steps=max(1, args.max_steps // 20),
         max_length=args.max_length,
         logging_steps=5,
-        save_steps=max(50, args.max_steps // 2),
+        save_steps=args.save_steps or max(50, args.max_steps // 2),
+        gradient_checkpointing=args.gradient_checkpointing,
         bf16=cuda,
         report_to=[],
         seed=args.seed,
     )
     peft_config = LoraConfig(r=args.lora_r, lora_alpha=2 * args.lora_r, lora_dropout=0.05,
                              target_modules="all-linear", task_type="CAUSAL_LM")
-    trainer = SFTTrainer(model=model, args=config, train_dataset=ds, peft_config=peft_config)
-    trainer.train()
+    callbacks = []
+    if torch.backends.mps.is_available():
+        class _EmptyMPSCache(TrainerCallback):
+            """Release cached MPS memory every step; without it memory builds up on long runs."""
+            def on_step_end(self, *a, **k):
+                torch.mps.empty_cache()
+        callbacks.append(_EmptyMPSCache())
+    trainer = SFTTrainer(model=model, args=config, train_dataset=ds, peft_config=peft_config, callbacks=callbacks)
+    last = None
+    if args.resume:
+        ckpts = sorted(Path(args.output).glob("checkpoint-*"), key=lambda p: int(p.name.split("-")[1]))
+        last = str(ckpts[-1]) if ckpts else None
+        print(f"resuming from {last}" if last else "no checkpoint found; starting fresh")
+    trainer.train(resume_from_checkpoint=last)
     trainer.save_model(args.output)
     Path(args.output, "training_manifest.json").write_text(json.dumps(
         {"model": args.model, "examples": len(ds), "args": vars(args), "log_history": trainer.state.log_history},

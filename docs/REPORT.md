@@ -414,6 +414,56 @@ never showed; the error breakdown located the failing step, the probe showed
 the skill was missing in every model tested, and each later version changed
 the training data to target a specific measured failure.
 
+### SFT v6: the combined family
+
+The combined family chains two skills: fix the time window, then catch the
+witness who is lying to cover for the culprit before applying the alibis.
+v5, trained only on timeline cases, carried the time skill over (window
+score 0.91) but almost never looked for a liar: 3 of 100 answers did, and its
+accuracy of 22% was near the 18% chance level.
+
+v6 continued from v5 on 1,000 combined-family traces plus 500 timeline
+traces as replay. The combined traces show the liar step explicitly: every
+witness claim is checked against each reliable record about the witness or
+the person they vouch for ("21:52 <= 22:27 <= 24:29, so inside the claimed
+time; different place, so the claim is false"). Training took about 5 hours
+on the M2 after two fixes for memory: gradient checkpointing and clearing the
+MPS cache every step. The first attempt without them slowed from 50 to 400
+seconds per step as memory filled.
+
+| Held-out | v5 | v6 |
+|---|---|---|
+| Combined family: accuracy | 22% (15-31), 100 cases | **70.5% (64-76), 200 cases** |
+| Combined family: pass rate | 8% | 67.5% |
+| Combined family: self-contradicting | 65% | 6% |
+| Combined family: answers that find the liar | 3 of 100 | 194 of 200 |
+| Timeline family, same 100 cases: accuracy | 83% (74-89) | 89% (81-94) |
+
+v6 learned the new skill and kept the old one: timeline accuracy on the same
+cases did not fall, and if anything rose. Its errors on the combined family
+are almost always complete misses rather than partial ones; its pass rate
+(67.5%) is close to its accuracy (70.5%).
+
+### The reliability suite
+
+Twelve hand-written cases (see `benchmarks/reliability/README.md`): six in
+the trained families but written as prose with traps, and six with reasoning
+types never trained on.
+
+| Model | Tier A, trained skills in prose | Tier B, new reasoning types | Valid format |
+|---|---|---|---|
+| SFT v5 | 0 of 6 | 1 of 6 | 10 of 12 |
+| SFT v6 | 2 of 6 | 3 of 6 | 12 of 12 |
+
+v6 does better, but prose is its weakest point. In three of its four tier A
+misses it got the time window wrong: once it took a distracting 01:30
+timestamp from a paragraph as the last sign of life, and twice it slipped by
+an hour when adding the error margin. The fourth miss was a lying-witness case,
+a family v6 was never trained on, where it picked the witness who behaved
+nervously. With twelve cases these are qualitative observations, not
+measurements, but they point directly at the next two versions: training on
+the lying-witness family, and training on evidence written as varied prose.
+
 ## 6. Training pipeline
 
 - **SFT warm-up.** Reasoning traces are written from the solver's facts in a
@@ -428,6 +478,28 @@ the training data to target a specific measured failure.
   other agent, on the same held-out splits.
 
 ## 7. Limitations and next steps
+
+Lessons carried forward from v1 to v6: show every decision's working in the
+traces, target one measured failure per version, track the remaining suspects
+explicitly, use enough examples, continue from the last good model with
+replay of earlier skills, and evaluate on 200+ held-out cases plus the
+reliability suite.
+
+Planned versions:
+
+- **v7:** one model for all three families, with record-by-record traces for
+  the lying-witness family as well.
+- **v8:** expert iteration on top of v7. On v1 it reinforced a shortcut; now
+  that most answers reason correctly, filtering for correct and consistent
+  answers should reinforce the right method.
+- **v9:** robustness to prose: training on evidence rewritten as varied
+  paragraphs with several facts each, checked so every fact survives.
+- **v10:** knowing when not to conclude: imperfect records, mistaken
+  witnesses, and a rewarded "evidence insufficient" answer.
+- **v11:** new reasoning types (physical mechanisms, computed probabilities),
+  then the same recipe on a 1.5B model with free GPU time, and a field test on
+  historical solved cases used for evaluation only.
+
 
 - Three reasoning families. Timeline and access, which witness is lying,
   and a combination of the two are covered. Physical mechanisms and
