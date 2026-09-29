@@ -47,6 +47,10 @@ TRACK = False
 # ("the alibi starts 22:50, the window opens 23:05"). SFT v4 showed the terse
 # comparison leads to copying errors; the verbose one scored 100% on the probe.
 VERBOSE_COMPARE = False
+# Index records by person in lying-witness traces (--index-records): each claim
+# check quotes that person's short list of records, so the lookup is local.
+# SFT v7 failed mostly at finding the right record among 15-20 lines.
+INDEX_RECORDS = False
 
 
 def _still(remaining: list[tuple[str, str]], label: str = "Still possible") -> str:
@@ -81,6 +85,13 @@ def write_liar_trace(raw: dict) -> str:
         # Every statement is expanded into the places it implies, and each is
         # checked against a record for the same person and time, if one exists.
         rec_at = {(rp, rt): (j, rl) for j, (rp, rt, rl, _) in records}
+        by_person: dict[str, list] = {}
+        for j, (rp, rt, rl, _) in records:
+            by_person.setdefault(rp, []).append((rt, j, rl))
+        if INDEX_RECORDS:
+            lines.append("Records by person:")
+            for rp in sorted(by_person):
+                lines.append(f"{rp}: " + "; ".join(f"{eid[j]} {rl} at {fmt(rt)}" for rt, j, rl in sorted(by_person[rp])) + ".")
         for i, f in enumerate(facts, 1):
             if f["kind"] != "statement":
                 continue
@@ -89,6 +100,10 @@ def write_liar_trace(raw: dict) -> str:
             for p, tm, l, _ in (tuple(a) for a in f["data"]["atoms"]):
                 who = f"{spk} was" if p == spk else f"{p} was"
                 line = f"{eid[i]}: {spk}'s statement means {who} at {l} at {fmt(tm)}. "
+                if INDEX_RECORDS:
+                    mine = sorted(by_person.get(p, []))
+                    line += (f"Records for {p}: " + "; ".join(f"{eid[j]} {rl} at {fmt(rt)}" for rt, j, rl in mine) + ". "
+                             if mine else f"Records for {p}: none. ")
                 if (p, tm) in rec_at:
                     j, rl = rec_at[(p, tm)]
                     if rl == l:
@@ -365,9 +380,10 @@ def main() -> None:
     ap.add_argument("--compact", action="store_true", help="shorter traces that fit small output budgets")
     ap.add_argument("--track", action="store_true", help="list the suspects still possible after each step")
     ap.add_argument("--verbose-compare", action="store_true", help="name each value in alibi comparisons")
+    ap.add_argument("--index-records", action="store_true", help="group records by person in lying-witness traces")
     args = ap.parse_args()
-    global COMPACT, TRACK, VERBOSE_COMPARE
-    COMPACT, TRACK, VERBOSE_COMPARE = args.compact, args.track, args.verbose_compare
+    global COMPACT, TRACK, VERBOSE_COMPARE, INDEX_RECORDS
+    COMPACT, TRACK, VERBOSE_COMPARE, INDEX_RECORDS = args.compact, args.track, args.verbose_compare, args.index_records
     raws = [json.loads(l) for path in args.train.split(",") for l in open(path, encoding="utf-8") if l.strip()]
     if args.limit:
         raws = raws[:args.limit]
