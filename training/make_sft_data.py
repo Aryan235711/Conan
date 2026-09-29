@@ -77,6 +77,38 @@ def write_liar_trace(raw: dict) -> str:
         lines.append(f"{eid[i]}: {p} was at {l} at {fmt(tm)}.")
     lines.append("\nStep 2 - Check what each statement implies against the records.")
     liar, clash = None, None
+    if VERBOSE_COMPARE:
+        # Every statement is expanded into the places it implies, and each is
+        # checked against a record for the same person and time, if one exists.
+        rec_at = {(rp, rt): (j, rl) for j, (rp, rt, rl, _) in records}
+        for i, f in enumerate(facts, 1):
+            if f["kind"] != "statement":
+                continue
+            spk = f["data"]["speaker"]
+            false_here = False
+            for p, tm, l, _ in (tuple(a) for a in f["data"]["atoms"]):
+                who = f"{spk} was" if p == spk else f"{p} was"
+                line = f"{eid[i]}: {spk}'s statement means {who} at {l} at {fmt(tm)}. "
+                if (p, tm) in rec_at:
+                    j, rl = rec_at[(p, tm)]
+                    if rl == l:
+                        line += f"{eid[j]} agrees."
+                    else:
+                        line += f"{eid[j]} shows {p} at {rl} at {fmt(tm)}; different place, so this is false."
+                        false_here = True
+                else:
+                    line += f"No record for {p} at {fmt(tm)}, so nothing contradicts it."
+                lines.append(line)
+            if false_here:
+                liar = spk
+        lines.append(f"Only {liar}'s statement is contradicted by a record, so {liar} is lying and everyone else fits.")
+        herr = [i for i, f in enumerate(facts, 1) if f["kind"] in ("demeanour", "salient")]
+        lines.append("\nStep 3 - Red herrings: " + ", ".join(eid[i] for i in herr)
+                     + " (behaviour or background, not where anyone was).")
+        answer = agent_solver(case, "", raw)
+        lines.append(f"\nConclusion: {liar} ({sid[liar]}) is lying.")
+        lines.append(_answer_block(answer))
+        return "\n".join(lines)
     for i, f in enumerate(facts, 1):
         if f["kind"] != "statement":
             continue
