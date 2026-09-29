@@ -113,3 +113,4 @@ BLUEPRINT.md
 # Reliability suite cases stay private (test-set contamination); tooling is public
 benchmarks/reliability/source/
 benchmarks/reliability/cases.jsonl
+GAME_BLUEPRINT.md
