@@ -164,7 +164,13 @@ def build_solver_case(src: dict) -> dict:
         "key_evidence": key,
         "red_herrings": herrings,
     }
-    gen = {"family": family, "facts": [dict(f.to_dict()) for f in facts_from(all_idx)]}
+    # Each fact records its paragraph ("para", 1-based) so trace writers can
+    # cite the paragraph, not the fact's position.
+    gen_facts = []
+    for i in all_idx:
+        for f in facts_from([i]):
+            gen_facts.append({**f.to_dict(), "para": i + 1})
+    gen = {"family": family, "facts": gen_facts}
     if family in ("timeline", "composite"):
         lo, hi = death_window(facts_from(all_idx))
         answer_key["time_window"] = {"label": "time of death", "earliest": fmt(lo), "latest": fmt(hi)}

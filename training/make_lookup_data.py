@@ -35,7 +35,7 @@ TEMPLATES = [
 ]
 
 
-def build(n: int, seed: int) -> list[dict]:
+def build(n: int, seed: int, p_none: float = 0.2) -> list[dict]:
     rng = random.Random(seed)
     pool = POOLS["A"]
     places = PLACES["A"]
@@ -53,13 +53,14 @@ def build(n: int, seed: int) -> list[dict]:
             records.add((p, t_target, rng.choice(places)))
         for _ in range(rng.randint(1, 4)):
             records.add((rng.choice(people), rng.choice(times), rng.choice(places)))
-        # outcome: 40% confirmed, 40% contradicted, 20% no record
+        # outcome: p_none no record (default 20%), the rest split between confirmed and contradicted
         roll = rng.random()
         true_place = rng.choice(places)
         records = {r for r in records if not (r[0] == target and r[1] == t_target)}
-        if roll < 0.8:
+        half = (1 - p_none) / 2
+        if roll < 1 - p_none:
             records.add((target, t_target, true_place))
-            claim = true_place if roll < 0.4 else rng.choice([p for p in places if p != true_place])
+            claim = true_place if roll < half else rng.choice([p for p in places if p != true_place])
         else:
             claim = rng.choice(places)
         recs = list(records)
@@ -102,9 +103,10 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--n", type=int, default=3000)
     ap.add_argument("--seed", type=int, default=11)
+    ap.add_argument("--p-none", type=float, default=0.2, help="share of items with no matching record")
     ap.add_argument("--out", default=str(ROOT / "data" / "generated" / "sft_lookup.jsonl"))
     args = ap.parse_args()
-    rows = build(args.n, args.seed)
+    rows = build(args.n, args.seed, args.p_none)
     with open(args.out, "w", encoding="utf-8") as f:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")

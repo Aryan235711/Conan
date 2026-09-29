@@ -134,7 +134,7 @@ def agent_unverified(case, prompt, raw):
 
 def agent_solver(case, prompt, raw):
     """Upper bound: solves from the generator's structured facts."""
-    if raw and "reliability" in raw:
+    if raw and ("reliability" in raw or raw.get("generator", {}).get("prose")):
         # Reliability cases group several facts per paragraph and include tier B
         # cases no solver covers, so the ceiling agent answers from the verified key.
         k = raw["answer_key"]
