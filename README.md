@@ -30,6 +30,7 @@ brackets.
 | **Qwen2.5 0.5B, SFT v5** | **83.5% (78-88)** | **81.0%** | **0.86** | **4%** |
 | Qwen2.5 0.5B, SFT v6 (timeline, 100 cases) | 89% (81-94) | 86% | 0.90 | 3% |
 | Qwen2.5 0.5B, SFT v7 (timeline, 100 cases) | 84% (76-90) | 82% | | 3% |
+| Qwen2.5 0.5B, SFT v7.1 (timeline, 100 cases) | 84% (76-90) | 82% | | 4% |
 | Qwen2.5 Coder 7B, untrained (20 cases) | 5% (1-24) | 0% | 0.16 | |
 
 On the combined family, where the model must catch a lying witness before
@@ -44,6 +45,13 @@ up from 24% (chance 26%); combined cases 77% on the same 100 cases v6 scored
 67% on; timeline 84%. On lying-witness cases it follows the method without
 contradicting itself, but fails to look up the right record for a claim, the
 next skill to teach.
+
+SFT v7.1 teaches that lookup with a short curriculum and traces that group
+records by person: a lookup probe rises from 30% to 82%, and lying-witness
+accuracy from 40% to **94.5% (90-97)** on 200 held-out cases, with combined
+(80%) and timeline (84%) unchanged or better. One model now scores 80-95% on
+all three generated families. The hand-written prose cases are the open
+problem: 1 of 12 for v7.1, down from 5 for v6.
 
 The path to 83.5% came from diagnosis rather than more training:
 

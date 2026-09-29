@@ -496,6 +496,35 @@ lines. This is the same pattern as the alibi comparison, and the same remedy
 applies: a short lookup curriculum with worked answers, and traces that first
 index the records by person so each check consults a short list.
 
+### SFT v7.1: teaching record lookup
+
+The v7 diagnosis pointed at one step, so v7.1 targeted it the same way the
+interval comparison was fixed. A lookup curriculum (3,000 items: a list of
+reliable records with decoys, and a worked answer that lists the person's
+records before deciding confirmed, contradicted or no record) was added, and
+the lying-witness traces now group the records by person and quote that
+person's short list at every claim check. v7.1 continued from v7 on 600
+curriculum items, 1,000 indexed lying-witness traces, and 150 combined plus
+150 timeline traces as replay.
+
+| Held-out | v7 | v7.1 |
+|---|---|---|
+| Lookup probe, 100 items (chance about 33%) | 30% (22-40) | **82% (73-88)** |
+| Lying-witness family, 200 cases | 40% (33-47) | **94.5% (90-97)** |
+| Combined family, 100 cases | 77% (68-84) | 80% (71-87) |
+| Timeline family, 100 cases | 84% (76-90) | 84% (76-90) |
+| Reliability suite | 2 of 12 | 1 of 12 |
+
+Teaching the one missing step took lying-witness accuracy from 40% to 94.5%,
+with no loss on the other two families. On the probe, v7.1 almost always
+confirms a true match (37 of 41) and catches a contradiction (40 of 41), but
+it now over-finds records: when none exists it says so in only 5 of 18 items.
+
+The reliability suite has fallen for three versions (v6 5, v7 2, v7.1 1 of
+12). Twelve cases are noisy, but a steady decline is a signal: each round of
+training on the generated format makes the model a little less robust to
+evidence written as prose. Prose robustness is now the priority.
+
 ## 6. Training pipeline
 
 - **SFT warm-up.** Reasoning traces are written from the solver's facts in a
