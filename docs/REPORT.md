@@ -464,6 +464,38 @@ nervously. With twelve cases these are qualitative observations, not
 measurements, but they point directly at the next two versions: training on
 the lying-witness family, and training on evidence written as varied prose.
 
+### SFT v7: one model for all three families
+
+v7 continued from v6 on 1,000 lying-witness traces, plus 300 combined and 300
+timeline traces as replay. The lying-witness traces now expand every
+statement into the places it implies ("I saw X at the café" places both the
+speaker and X there) and check each against a record for the same person and
+time.
+
+| Held-out | v6 | v7 |
+|---|---|---|
+| Lying-witness family | 24% (17-33), 100 cases, chance 26% | **40% (33-47)**, 200 cases |
+| Combined family, same 100 cases | 67% | **77% (68-84)** |
+| Timeline family, 100 cases | 89% (81-94) | 84% (76-90) |
+| Reliability suite | 5 of 12 | 2 of 12 |
+
+v7 is one model that handles all three families, and it improved on both
+witness families. The timeline dip is within the intervals. The reliability
+suite fell from 5 to 2 of 12; with twelve cases a swing of three is largely
+noise, but prose remains the weakest area for every version.
+
+**Where the lying-witness family fails.** v7 never contradicts itself (0%
+violations) and its pass rate equals its accuracy, so it follows the method
+cleanly. Of its 120 wrong answers, 55 find no contradiction at all, reporting
+"no record" for every statement, and 62 pair a statement with a record about a
+different person or time. Only 2 find the right contradiction and then name
+the wrong liar, and 1 invents a record. Accuracy is flat across difficulty
+levels. The failing step is not reasoning but lookup: for each claim, finding
+the one record about the same person at the same time among 15-20 evidence
+lines. This is the same pattern as the alibi comparison, and the same remedy
+applies: a short lookup curriculum with worked answers, and traces that first
+index the records by person so each check consults a short list.
+
 ## 6. Training pipeline
 
 - **SFT warm-up.** Reasoning traces are written from the solver's facts in a

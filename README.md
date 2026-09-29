@@ -29,6 +29,7 @@ brackets.
 | Qwen2.5 0.5B, three rounds of expert iteration | 24.0% (19-30) | 14.5% | 0.29 | 45% |
 | **Qwen2.5 0.5B, SFT v5** | **83.5% (78-88)** | **81.0%** | **0.86** | **4%** |
 | Qwen2.5 0.5B, SFT v6 (timeline, 100 cases) | 89% (81-94) | 86% | 0.90 | 3% |
+| Qwen2.5 0.5B, SFT v7 (timeline, 100 cases) | 84% (76-90) | 82% | | 3% |
 | Qwen2.5 Coder 7B, untrained (20 cases) | 5% (1-24) | 0% | 0.16 | |
 
 On the combined family, where the model must catch a lying witness before
@@ -37,6 +38,12 @@ the timeline works, v5 scored 22% (chance 18%) and looked for a liar in 3 of
 the records, scores **70.5% (64-76)** on 200 held-out cases and finds the liar
 in 194 of 200, without losing timeline accuracy. On twelve hand-written prose
 cases with traps it solves 5, up from 1 for v5; prose remains the weakest point.
+
+SFT v7 is one model for all three families: lying-witness cases 40% (33-47),
+up from 24% (chance 26%); combined cases 77% on the same 100 cases v6 scored
+67% on; timeline 84%. On lying-witness cases it follows the method without
+contradicting itself, but fails to look up the right record for a claim, the
+next skill to teach.
 
 The path to 83.5% came from diagnosis rather than more training:
 
