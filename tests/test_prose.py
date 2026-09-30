@@ -79,7 +79,7 @@ def timeline_culprits(case: dict) -> set[str]:
 print("Prose cases")
 cases = []
 for fam, levels in (("timeline", (1, 2, 3)), ("liar", (1, 2, 3)), ("composite", (2, 3))):
-    for bank, pool in (("train", "A"), ("test", "B")):
+    for bank, pool in (("train", "A"), ("test", "B"), ("wide", "A")):
         cs = prose.generate(25, 301, fam, levels, pool, bank, f"T{fam[0]}{bank[0]}")
         cases += cs
         check(f"{fam}/{bank}: 25 cases build", len(cs) == 25)
@@ -106,9 +106,20 @@ check("every fact's names and places appear in its paragraph", bad_text == 0, st
 check("the verified answer scores 1.0 on every case", bad_score == 0, str(bad_score))
 check("independent minute-by-minute solve agrees on every timeline case", bad_indep == 0, str(bad_indep))
 
-ext_ok = all(i > 0 and "membership card logged" in c["evidence"][i - 1]
-             for c in cases for i, e in enumerate(c["evidence"]) if "simply stopped logging" in e)
-check("an alibi extension always follows the record it corrects", ext_ok)
+def _extension_ok(c: dict) -> bool:
+    """An alibi that extends another (same person and start, later end) sits in
+    the paragraph right after the one it extends."""
+    al = [f for f in c["generator"]["facts"] if f["kind"] == "alibi"]
+    for f in al:
+        for g in al:
+            if (g is not f and g["data"]["name"] == f["data"]["name"] and g["data"]["start"] == f["data"]["start"]
+                    and g["data"]["end"] > f["data"]["end"] and g["para"] != f["para"] + 1):
+                return False
+    return True
+
+
+ext = [c for c in cases if c["generator"]["family"] == "timeline"]
+check("an alibi extension always follows the record it corrects", all(_extension_ok(c) for c in ext))
 
 print("\nPhrasing banks")
 overlap = [k for k, v in prose.BANK.items() if set(v["train"]) & set(v["test"])]
@@ -121,6 +132,36 @@ for k, v in prose.BANK.items():
         if len(chunk) >= 15 and chunk in train_text:
             leaks.append(chunk)
 check("no test-bank phrase appears in train-bank cases", not leaks, str(leaks[:3]))
+
+
+def _grams(words: list[str], n: int = 4) -> set[tuple]:
+    return {tuple(words[i:i + n]) for i in range(len(words) - n + 1)}
+
+
+def _runs(tpl: str) -> list[list[str]]:
+    return [re.findall(r"[a-z0-9°'\-]+", chunk.lower()) for chunk in re.split(r"\{[a-z_]+\}", tpl)]
+
+
+test_g = {g for v in prose.BANK.values() for tpl in v["test"] for w in _runs(tpl) for g in _grams(w)}
+train_g = {g for v in prose.BANK.values() for tpl in v["train"] for w in _runs(tpl) for g in _grams(w)}
+banned = test_g - train_g
+wide_cases = []
+for fam, levels in (("timeline", (2, 3)), ("liar", (2, 3)), ("composite", (2, 3))):
+    wide_cases += prose.generate(60, 401, fam, levels, "A", "wide", "W")
+hits = {g for c in wide_cases for e in c["evidence"]
+        for g in _grams(re.findall(r"[a-z0-9°'\-]+", e.lower())) & banned}
+check("no four-word run of a test template appears in wide-bank text", not hits, str(sorted(hits)[:3]))
+
+
+def _shape(e: str) -> str:
+    e = re.sub(r"\d\d:\d\d", "T", e)
+    return re.sub(r"\b[A-Z][a-z]+ [A-Z][a-z]+\b", "N", e)
+
+
+wide_shapes = {_shape(e) for c in wide_cases for e in c["evidence"]}
+train_shapes = {_shape(e) for c in cases if c["generator"]["bank"] == "train" for e in c["evidence"]}
+check("the wide bank is far more varied than the train bank", len(wide_shapes) > 2 * len(train_shapes),
+      f"{len(wide_shapes)} vs {len(train_shapes)}")
 
 print("\nTraces")
 make_sft_data.COMPACT = make_sft_data.TRACK = make_sft_data.VERBOSE_COMPARE = True

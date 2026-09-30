@@ -37,6 +37,7 @@ from typing import Any
 
 from . import composite, liar
 from . import generator as timeline
+from . import prose_grammar as G
 from .generator import POOLS, death_window, fmt
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -236,11 +237,26 @@ POINT_PLACES = ["the petrol station", "the corner shop", "the taxi rank", "the l
 
 
 class Writer:
+    """Chooses phrasing. Banks "train" and "test" are the fixed templates v9 used.
+    Bank "wide" mixes the train templates (a quarter of the time) with the
+    phrasing grammar, merges more facts per paragraph and adds fillers; it
+    draws extra random numbers, so it never changes the other banks' output."""
+
     def __init__(self, rng: random.Random, bank: str):
         self.rng, self.bank = rng, bank
+        self.wide = bank == "wide"
 
     def say(self, kind: str, **kw: Any) -> str:
+        if self.wide:
+            # the short record and its extension refer to each other, so both come from the grammar
+            if kind not in ("alibi_short", "alibi_extend") and self.rng.random() < 0.25:
+                return self.rng.choice(BANK[kind]["train"]).format(**kw)
+            return G.say(self.rng, kind, **kw)
         return self.rng.choice(BANK[kind][self.bank]).format(**kw)
+
+    def merge(self, p: float) -> tuple[float, int]:
+        """Merge probability and longest run of paragraphs merged into one."""
+        return (min(p + 0.2, 0.6), 3) if self.wide else (p, 2)
 
 
 def _names(xs: list[str]) -> str:
@@ -263,16 +279,22 @@ def _para(text: str, facts: list[dict], herring: bool = False) -> dict:
     return {"text": text, "facts": facts, "herring": herring}
 
 
-def _merge_pairs(rng: random.Random, paras: list[dict], p: float) -> list[dict]:
-    """Merge random neighbours (same herring status) into one paragraph."""
+def _merge_pairs(rng: random.Random, paras: list[dict], p: float, max_run: int = 2) -> list[dict]:
+    """Merge random neighbours (same herring status) into one paragraph, up to
+    max_run paragraphs per merge."""
     out: list[dict] = []
     i = 0
     while i < len(paras):
         a = paras[i]
         if i + 1 < len(paras) and paras[i + 1]["herring"] == a["herring"] and rng.random() < p:
             b = paras[i + 1]
-            out.append(_para(a["text"] + " " + b["text"], a["facts"] + b["facts"], a["herring"]))
+            merged = _para(a["text"] + " " + b["text"], a["facts"] + b["facts"], a["herring"])
             i += 2
+            while (max_run > 2 and i < len(paras) and len(merged["facts"]) < max_run
+                   and paras[i]["herring"] == a["herring"] and rng.random() < p):
+                merged = _para(merged["text"] + " " + paras[i]["text"], merged["facts"] + paras[i]["facts"], a["herring"])
+                i += 1
+            out.append(merged)
         else:
             out.append(a)
             i += 1
@@ -298,9 +320,13 @@ def _physical(world: dict, W: Writer) -> list[dict]:
     alive = [la.data["time"]]
     if rng.random() < 0.35:                                   # an earlier sign of life; the later one fixes the window
         alive.append(la.data["time"] - rng.randint(40, 150))
-    templates = rng.sample(BANK["alive"][W.bank], len(alive))
-    for tm, tpl in zip(alive, templates):
-        paras.append(_para(tpl.format(v=v, t=fmt(tm), room=room), [_fact("last_alive", time=tm)]))
+    if W.wide:
+        for tm in alive:
+            paras.append(_para(W.say("alive", v=v, t=fmt(tm), room=room), [_fact("last_alive", time=tm)]))
+    else:
+        templates = rng.sample(BANK["alive"][W.bank], len(alive))
+        for tm, tpl in zip(alive, templates):
+            paras.append(_para(tpl.format(v=v, t=fmt(tm), room=room), [_fact("last_alive", time=tm)]))
     if "homicide" in by:
         paras.append(_para(W.say("homicide"), [_fact("homicide")]))
     return paras
@@ -339,8 +365,16 @@ def _motives(world: dict, W: Writer) -> list[dict]:
     return out
 
 
-def _salient(world: dict) -> list[dict]:
-    return [_para(f.text, [], herring=True) for f in world["facts"] if f.kind == "salient"]
+def _salient(world: dict, W: Writer) -> list[dict]:
+    out = []
+    for f in world["facts"]:
+        if f.kind == "salient":
+            text = f.text
+            if W.wide:
+                text = W.rng.choice(POOLS[world["pool"]]["salient"] + G.SALIENT).format(
+                    t=fmt(W.rng.randint(9 * 60, 13 * 60)))
+            out.append(_para(text, [], herring=True))
+    return out
 
 
 def _order(rng: random.Random, head: list[dict], rest: list[dict]) -> list[dict]:
@@ -394,7 +428,7 @@ def timeline_source(world: dict, W: Writer) -> dict:
                 text += " " + W.say("point", s=s, q=q, t=fmt(tm))
                 facts.append(_fact("point", name=s, time=tm, place=q))
             rest.append(_para(text, facts))
-    rest += _merge_pairs(rng, alibis, 0.3) + _motives(world, W) + _salient(world)
+    rest += _merge_pairs(rng, alibis, *W.merge(0.3)) + _motives(world, W) + _salient(world, W)
     scen = [{"text": f"{s}, the {world['roles'][s]}, killed {world['victim']}.", "label": s} for s in world["suspects"]]
     if world["accident"]:
         scen.append({"text": f"{world['victim']}'s death was an accident.", "label": "accident"})
@@ -427,7 +461,7 @@ def composite_source(world: dict, W: Writer) -> dict:
         elif f.kind == "demeanour":
             rest.append(_para(W.say("demeanour", w=d["name"]), [], herring=True))
     rng.shuffle(records)
-    rest += _merge_pairs(rng, records, 0.3) + _motives(world, W) + _salient(world)
+    rest += _merge_pairs(rng, records, *W.merge(0.3)) + _motives(world, W) + _salient(world, W)
     scen = [{"text": f"{s}, the {world['roles'][s]}, killed {world['victim']}.", "label": s} for s in world["suspects"]]
     scen.append({"text": f"{world['victim']}'s death was an accident.", "label": "accident"})
     body = _order(rng, head[1:], rest)
@@ -462,7 +496,11 @@ def liar_source(world: dict, W: Writer) -> dict:
         elif f.kind == "demeanour":
             herrings.append(_para(W.say("demeanour", w=d["name"]), [], herring=True))
         elif f.kind == "salient":
-            herrings.append(_para(f.text, [], herring=True))
+            text = f.text
+            if W.wide:
+                text = rng.choice(POOLS[world["pool"]]["salient"] + G.SALIENT).format(
+                    t=fmt(rng.randint(6 * 60, 12 * 60)))
+            herrings.append(_para(text, [], herring=True))
     statements = []
     for s, ps in by_speaker.items():
         if len(ps) == 2 and rng.random() < 0.5:           # both of a witness's statements in one paragraph
@@ -471,7 +509,7 @@ def liar_source(world: dict, W: Writer) -> dict:
             statements += ps
     rng.shuffle(records)
     rng.shuffle(herrings)
-    body = statements + _merge_pairs(rng, records, 0.3) + _merge_pairs(rng, herrings, 0.2)
+    body = statements + _merge_pairs(rng, records, *W.merge(0.3)) + _merge_pairs(rng, herrings, *W.merge(0.2))
     rng.shuffle(body)
     ws = world["witnesses"]
     return {"family": "liar", "evidence": [_para(W.say("rule_liar"), [])] + body,
@@ -507,6 +545,10 @@ def make_case(family: str, rng: random.Random, level: int, pool: str, bank: str,
         return None
     world["pool"] = pool
     src = to_source(world, Writer(rng, bank))
+    if bank == "wide":                                   # background sentences inside fact paragraphs
+        for para in src["evidence"]:
+            if para["facts"] and rng.random() < 0.12:
+                para["text"] += " " + rng.choice(G.FILLERS)
     src.update({"id": case_id, "tier": "P", "verification": "solver"})
     b = _builder()
     try:
@@ -547,6 +589,15 @@ SPLITS = {
     "prose_train": [("timeline", 1000, 21, (1, 2, 3), "A", "train", "PRT"),
                     ("liar", 1000, 22, (1, 2, 3), "A", "train", "PRL"),
                     ("composite", 1000, 23, (2, 3), "A", "train", "PRC")],
+    # Diagnostic: training phrasings on held-out names and worlds. The gap between
+    # this and prose_test measures how much of the prose error is unseen wording.
+    "prose_val": [("timeline", 20, 27, (2, 3), "B", "train", "PVT"),
+                  ("liar", 20, 28, (2, 3), "B", "train", "PVL"),
+                  ("composite", 20, 29, (2, 3), "B", "train", "PVC")],
+    # v9.1: the phrasing grammar, levels 2-3 like the test.
+    "prose_wide_train": [("timeline", 1000, 31, (2, 3), "A", "wide", "PWT"),
+                         ("liar", 1000, 32, (2, 3), "A", "wide", "PWL"),
+                         ("composite", 1200, 33, (2, 3), "A", "wide", "PWC")],
     "prose_test": [("timeline", 50, 24, (2, 3), "B", "test", "PXT"),
                    ("liar", 50, 25, (2, 3), "B", "test", "PXL"),
                    ("composite", 50, 26, (2, 3), "B", "test", "PXC")],
