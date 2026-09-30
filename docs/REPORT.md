@@ -525,6 +525,56 @@ The reliability suite has fallen for three versions (v6 5, v7 2, v7.1 1 of
 training on the generated format makes the model a little less robust to
 evidence written as prose. Prose robustness is now the priority.
 
+### SFT v9: prose robustness
+
+v7.1's failures on the hand-written cases were misreadings, not reasoning
+errors: a suspect's receipt time taken as the victim's last sign of life, a
+claim checked against a record about someone else, a fact lost inside a
+paragraph that held several. So v9 teaches reading.
+
+- **Prose cases** (`detective_engine/prose.py`). Worlds from all three
+  families are written as prose with traps: several facts per paragraph, an
+  earlier sign of life beside the one that counts, an alibi extended by a
+  second source, a receipt that is a single moment, a returned key. Each case
+  is rebuilt by the reliability builder, which re-checks that the text states
+  every fact and re-solves the answer. Phrasings come in two disjoint banks:
+  training uses one, the held-out `prose_test` (150 cases, held-out names)
+  uses the other.
+- **A reading step.** Every trace now starts by listing what each paragraph
+  states, then reasons as before. Combined-family traces also look up each
+  person's records before checking a claim, as lying-witness traces do.
+- **Lookup items with more "no record" answers**, the gap v7.1 left.
+
+v9 continued from v7.1 on 1,600 prose traces, 450 templated traces and 300
+lookup items (587 steps, about 9 hours on the laptop).
+
+| Held-out | v7.1 | v9 |
+|---|---|---|
+| Prose test, 150 cases, unseen phrasing | 29% (22-36) | **43% (35-51)** |
+| &nbsp;&nbsp;timeline / lying witness / combined, 50 each | 30% / 34% / 22% | 58% / 42% / 28% |
+| Reliability suite, hand-written | 1 of 12 | **5 of 12** |
+| Lookup probe | 82% ("no record" 5/18) | **90%** ("no record" 16/18) |
+| Lying-witness family, 100 cases | 96% | 97% |
+| Combined family, 100 cases | 80% | **92% (85-96)** |
+| Timeline family, 100 cases | 84% | 85% |
+
+v9 is the best model on every split, and the combined family gains most,
+probably from the record lookup its traces now show. But prose is still far
+behind the templated format (43% against 85-97%). Checking the reading step
+against the correct reading shows why: only 39-49% of fact paragraphs are read
+exactly right, and the errors concentrate on wording the training bank never
+used ("vouches for", "season ticket scanned"), on the second fact of a merged
+paragraph, and on losing track of paragraph numbers. With three to five
+phrasings per fact type, v9 learned the phrasings rather than reading.
+
+A caveat on the reliability suite: the traps were designed after reading
+v7.1's failures on its tier A cases, so those cases are no longer fully blind.
+The prose test, written in a bank the model never saw, is the clean measure.
+
+Next: far more varied phrasing (a local model paraphrasing each paragraph,
+kept only if every name, time and place survives), with the test bank still
+held out.
+
 ## 6. Training pipeline
 
 - **SFT warm-up.** Reasoning traces are written from the solver's facts in a
