@@ -23,6 +23,11 @@ def _cap(s: str) -> str:
     return s[:1].upper() + s[1:]
 
 
+def _low(s: str) -> str:
+    """Lower-case a sentence-initial word for mid-sentence use, leaving acronyms (CCTV) alone."""
+    return s if s[1:2].isupper() else s[:1].lower() + s[1:]
+
+
 def span(r: random.Random, a: str, b: str) -> str:
     """A stay from a to b; a always comes before b in the text."""
     return r.choice([
@@ -149,11 +154,11 @@ def alibi(r, s, p, a, b):
     sp = span(r, a, b)
     return r.choice([
         f"{src} at {p} shows {s} there {sp}.",
-        f"{s} was at {p} {sp}; {src[0].lower() + src[1:]} confirms it.",
-        f"According to {src[0].lower() + src[1:]} at {p}, {s} was there {sp}.",
+        f"{s} was at {p} {sp}; {_low(src)} confirms it.",
+        f"According to {_low(src)} at {p}, {s} was there {sp}.",
         f"{src} confirms that {s} was at {p} {sp}.",
-        f"{s} arrived at {p} at {a} and left at {b}, which {src[0].lower() + src[1:]} confirms.",
-        f"{s} left {p} at {b}, having arrived at {a}; {src[0].lower() + src[1:]} backs this up.",
+        f"{s} arrived at {p} at {a} and left at {b}, which {_low(src)} confirms.",
+        f"{s} left {p} at {b}, having arrived at {a}; {_low(src)} backs this up.",
         f"{s}'s evening is verified: {p}, {sp}.",
         f"{src} puts {s} at {p} {sp}.",
     ])
@@ -223,7 +228,7 @@ SOURCES_POINT = ["Card logs", "CCTV", "A timestamped receipt", "Bank records", "
 
 def record(r, n, l, t):
     src = r.choice(SOURCES_POINT)
-    low = src[0].lower() + src[1:]
+    low = _low(src)
     return r.choice([
         f"{src} shows {n} at {l} at {t}.",
         f"{src} puts {n} at {l} at {t}.",

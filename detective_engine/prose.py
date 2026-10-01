@@ -235,6 +235,17 @@ BANK: dict[str, dict[str, list[str]]] = {
 
 POINT_PLACES = ["the petrol station", "the corner shop", "the taxi rank", "the late-night pharmacy"]
 
+LLM_BANK = ROOT / "data" / "paraphrase_bank.json"
+_LLM: dict | None = None
+
+
+def _llm_bank() -> dict:
+    """Verified paraphrases written by training/paraphrase_bank.py."""
+    global _LLM
+    if _LLM is None:
+        _LLM = json.loads(LLM_BANK.read_text(encoding="utf-8")) if LLM_BANK.exists() else {}
+    return _LLM
+
 
 class Writer:
     """Chooses phrasing. Banks "train" and "test" are the fixed templates v9 used.
@@ -244,9 +255,22 @@ class Writer:
 
     def __init__(self, rng: random.Random, bank: str):
         self.rng, self.bank = rng, bank
-        self.wide = bank == "wide"
+        self.wide = bank in ("wide", "wide2")
 
     def say(self, kind: str, **kw: Any) -> str:
+        if self.bank == "wide2":
+            # Bank "wide2" adds verified paraphrases from a local LLM (data/paraphrase_bank.json):
+            # 40% paraphrase where one exists, 15% train template, the rest grammar.
+            if kind == "access":
+                return self.say("no_entry", **kw) + " " + self.say("holders", **kw)
+            if kind not in ("alibi_short", "alibi_extend"):
+                llm = _llm_bank().get(kind, [])
+                roll = self.rng.random()
+                if llm and roll < 0.4:
+                    return self.rng.choice(llm).format(**kw)
+                if roll < 0.55:
+                    return self.rng.choice(BANK[kind]["train"]).format(**kw)
+            return G.say(self.rng, kind, **kw)
         if self.wide:
             # the short record and its extension refer to each other, so both come from the grammar
             if kind not in ("alibi_short", "alibi_extend") and self.rng.random() < 0.25:
@@ -545,7 +569,7 @@ def make_case(family: str, rng: random.Random, level: int, pool: str, bank: str,
         return None
     world["pool"] = pool
     src = to_source(world, Writer(rng, bank))
-    if bank == "wide":                                   # background sentences inside fact paragraphs
+    if bank in ("wide", "wide2"):                        # background sentences inside fact paragraphs
         for para in src["evidence"]:
             if para["facts"] and rng.random() < 0.12:
                 para["text"] += " " + rng.choice(G.FILLERS)
@@ -598,6 +622,10 @@ SPLITS = {
     "prose_wide_train": [("timeline", 1000, 31, (2, 3), "A", "wide", "PWT"),
                          ("liar", 1000, 32, (2, 3), "A", "wide", "PWL"),
                          ("composite", 1200, 33, (2, 3), "A", "wide", "PWC")],
+    # v9.2: grammar plus verified LLM paraphrases.
+    "prose_wide2_train": [("timeline", 1000, 41, (2, 3), "A", "wide2", "PZT"),
+                          ("liar", 1000, 42, (2, 3), "A", "wide2", "PZL"),
+                          ("composite", 1300, 43, (2, 3), "A", "wide2", "PZC")],
     "prose_test": [("timeline", 50, 24, (2, 3), "B", "test", "PXT"),
                    ("liar", 50, 25, (2, 3), "B", "test", "PXL"),
                    ("composite", 50, 26, (2, 3), "B", "test", "PXC")],
@@ -612,6 +640,9 @@ def main() -> None:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     for name, parts in SPLITS.items():
+        if any(p[5] == "wide2" for p in parts) and not LLM_BANK.exists():
+            print(f"{name:12} skipped: {LLM_BANK.name} not built yet (training/paraphrase_bank.py)")
+            continue
         cases = []
         for family, count, seed, levels, pool, bank, prefix in parts:
             cases += generate(max(1, int(count * args.scale)), seed, family, levels, pool, bank, prefix)

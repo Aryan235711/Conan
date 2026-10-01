@@ -51,6 +51,10 @@ VERBOSE_COMPARE = False
 # check quotes that person's short list of records, so the lookup is local.
 # SFT v7 failed mostly at finding the right record among 15-20 lines.
 INDEX_RECORDS = False
+# Key holders in the order the paragraph names them (--text-order), not sorted:
+# copying is easier than sorting for a small model, and v9.1's sorted lists
+# held most of its key-holder reading errors.
+TEXT_ORDER = False
 # Reading pass (--read): before reasoning, list what each evidence paragraph
 # states in one canonical line. Prose paragraphs hold several facts, and v7.1
 # failed the prose reliability cases mostly by misreading them.
@@ -65,9 +69,12 @@ def _fact_ids(raw: dict) -> tuple[list[Fact], dict[int, str]]:
     return facts, {id(f): f"E{d.get('para', i)}" for i, (f, d) in enumerate(zip(facts, fl), 1)}
 
 
-def _read_fact(f: Fact) -> str:
+def _read_fact(f: Fact, text: str = "") -> str:
     d = f.data
     k = f.kind
+    if k == "keyholders" and TEXT_ORDER and text:
+        names = sorted(d["names"], key=lambda n: (text.find(n) if n in text else len(text)))
+        return "key holders: " + ", ".join(names)
     if k == "discovery":
         return f"body found at {fmt(d['time'])}"
     if k == "body_temp":
@@ -111,7 +118,8 @@ def _read_pass(raw: dict) -> list[str]:
     facts, eid = _fact_ids(raw)
     per: dict[str, list[str]] = {}
     for f in facts:
-        per.setdefault(eid[id(f)], []).append(_read_fact(f))
+        e = eid[id(f)]
+        per.setdefault(e, []).append(_read_fact(f, raw["evidence"][int(e[1:]) - 1]))
     fam = raw["generator"].get("family")
     lines = ["Step 0 - What each paragraph states."]
     motives, background = [], []
@@ -481,10 +489,12 @@ def main() -> None:
     ap.add_argument("--verbose-compare", action="store_true", help="name each value in alibi comparisons")
     ap.add_argument("--index-records", action="store_true", help="group records by person in lying-witness traces")
     ap.add_argument("--read", action="store_true", help="start with what each evidence paragraph states")
+    ap.add_argument("--text-order", action="store_true", help="list key holders in the order the text names them")
     args = ap.parse_args()
-    global COMPACT, TRACK, VERBOSE_COMPARE, INDEX_RECORDS, READ
+    global COMPACT, TRACK, VERBOSE_COMPARE, INDEX_RECORDS, READ, TEXT_ORDER
     COMPACT, TRACK, VERBOSE_COMPARE, INDEX_RECORDS, READ = (args.compact, args.track, args.verbose_compare,
                                                             args.index_records, args.read)
+    TEXT_ORDER = args.text_order
     raws = [json.loads(l) for path in args.train.split(",") for l in open(path, encoding="utf-8") if l.strip()]
     if args.limit:
         raws = raws[:args.limit]
