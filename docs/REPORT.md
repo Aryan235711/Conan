@@ -575,6 +575,48 @@ Next: far more varied phrasing (a local model paraphrasing each paragraph,
 kept only if every name, time and place survives), with the test bank still
 held out.
 
+### SFT v9.1: varied phrasing
+
+Before changing anything, a diagnostic split asked whether v9's prose gap was
+wording or something else: 60 new prose cases in v9's *training* phrasings,
+with held-out names. v9 scored **85% (74-92)** there and read 91-99% of
+paragraphs exactly, against 43% and 39-49% on the held-out phrasings. The gap
+was entirely unseen wording.
+
+v9.1 adds a phrasing grammar (`detective_engine/prose_grammar.py`) that builds
+each sentence from interchangeable sources, verbs, time expressions and frames
+(some give the end time before the start), merges up to three facts per
+paragraph and adds filler sentences. It gives about five times as many
+distinct paragraph shapes as v9's templates. A test forbids any four-word run
+of a held-out test template in the new text, so the prose test stays unseen.
+v9.1 continued from v9 on 1,800 such prose traces, 240 templated traces and
+100 lookup items (535 steps, about 8.7 hours).
+
+| Held-out | v9 | v9.1 |
+|---|---|---|
+| Prose test, 150 cases, unseen phrasing | 43% (35-51) | **66% (58-73)** |
+| &nbsp;&nbsp;timeline / lying witness / combined, 50 each | 58% / 42% / 28% | 74% / 74% / 50% |
+| &nbsp;&nbsp;paragraphs read exactly | 39-49% | **76-78%** |
+| Prose in training phrasings, 60 cases | 85% | 87% |
+| Reliability suite, tier A (prose, trained families) | 2 of 6 | **5 of 6** |
+| Reliability suite, tier B (other reasoning types) | 3 of 6 | 0 of 6 |
+| Lying-witness family, 100 cases | 97% | 98% |
+| Combined family, 100 cases | 92% | 92% |
+| Timeline family, 100 cases | 85% | 85% |
+| Lookup probe | 90% | 90% |
+
+Varied phrasing worked: the model now reads most paragraphs of wording it never
+saw, and held-out prose accuracy rose by 23 points with no loss anywhere on the
+templated families. The combined family, with 25 or more paragraphs per case,
+is still the weakest at 50%.
+
+Tier B went from 3 of 6 to 0 of 6. Those cases need reasoning no generator
+teaches (lividity, timetables, stomach contents, two liars, probability), so
+v9 was likely solving them by chance or general knowledge that further
+training on the three families has pushed out. That is the job of the new
+reasoning types planned for v11. Tier A's traps were designed after seeing
+v7.1 fail them, so the prose test remains the cleaner measure.
+
 ## 6. Training pipeline
 
 - **SFT warm-up.** Reasoning traces are written from the solver's facts in a

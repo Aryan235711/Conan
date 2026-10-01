@@ -32,6 +32,7 @@ brackets.
 | Qwen2.5 0.5B, SFT v7 (timeline, 100 cases) | 84% (76-90) | 82% | | 3% |
 | Qwen2.5 0.5B, SFT v7.1 (timeline, 100 cases) | 84% (76-90) | 82% | | 4% |
 | Qwen2.5 0.5B, SFT v9 (timeline, 100 cases) | 85% (77-91) | 83% | | 3% |
+| Qwen2.5 0.5B, SFT v9.1 (timeline, 100 cases) | 85% (77-91) | 85% | | 0% |
 | Qwen2.5 Coder 7B, untrained (20 cases) | 5% (1-24) | 0% | 0.16 | |
 
 On the combined family, where the model must catch a lying witness before
@@ -61,6 +62,14 @@ the hand-written cases from 1 to 5 of 12. It is also the best model on the
 templated families: lying witness 97%, combined **92%**, timeline 85% (100
 cases each). Prose remains the gap: the reading step is exact on fewer than
 half of the paragraphs, failing mostly on unfamiliar wording.
+
+A diagnostic showed the gap was wording alone: in its training phrasings v9
+scores 85% on new prose cases. SFT v9.1 adds a phrasing grammar (about five
+times more sentence shapes, test phrasing excluded) and raises held-out prose
+accuracy to **66% (58-73)**, reading 76-78% of unseen paragraphs exactly, with
+the templated families unchanged (lying witness 98%, combined 92%, timeline
+85%). It solves 5 of 6 hand-written prose cases in the trained families but
+none of the 6 that need other reasoning types.
 
 The path to 83.5% came from diagnosis rather than more training:
 
