@@ -79,7 +79,8 @@ def timeline_culprits(case: dict) -> set[str]:
 print("Prose cases")
 cases = []
 for fam, levels in (("timeline", (1, 2, 3)), ("liar", (1, 2, 3)), ("composite", (2, 3))):
-    banks = [("train", "A"), ("test", "B"), ("wide", "A")] + ([("wide2", "A")] if prose.LLM_BANK.exists() else [])
+    banks = ([("train", "A"), ("test", "B"), ("wide", "A")] + ([("wide2", "A")] if prose.LLM_BANK.exists() else [])
+             + ([("wide3", "A")] if prose.LLM_BANK_V2.exists() else []))
     for bank, pool in banks:
         cs = prose.generate(25, 301, fam, levels, pool, bank, f"T{fam[0]}{bank[0]}")
         cases += cs
@@ -150,7 +151,7 @@ wide_cases = []
 for fam, levels in (("timeline", (2, 3)), ("liar", (2, 3)), ("composite", (2, 3))):
     wide_cases += prose.generate(60, 401, fam, levels, "A", "wide", "W")
 if prose.LLM_BANK.exists():
-    wide_cases += [c for c in cases if c["generator"]["bank"] == "wide2"]
+    wide_cases += [c for c in cases if c["generator"]["bank"] in ("wide2", "wide3")]
 hits = {g for c in wide_cases for e in c["evidence"]
         for g in _grams(re.findall(r"[a-z0-9°'\-]+", e.lower())) & banned}
 check("no four-word run of a test template appears in wide-bank text", not hits, str(sorted(hits)[:3]))

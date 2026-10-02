@@ -14,9 +14,13 @@ sentence pattern, then keeps a paraphrase only if it passes every check:
      field exactly. A paraphrase that turns a claim into a record, drops the
      companion from an alibi, or moves a time is rejected.
 
-Output: data/paraphrase_bank.json, {kind: [template with {s}-style fields]}.
+Output: data/paraphrase_bank.json (or --out), {kind: [template with {s}-style fields]}.
+An existing output file is extended, never overwritten. --gen-model picks the
+paraphrasing model; the checker always uses --model, so a second generator
+adds new styles under the same verification.
 
     python3 training/paraphrase_bank.py --rounds 8
+    python3 training/paraphrase_bank.py --out data/paraphrase_bank_v2.json --gen-model deepseek-r1:8b
 """
 
 from __future__ import annotations
@@ -153,9 +157,19 @@ Rules:
 - Keep every bracketed token exactly as written: {tokens}. Each must appear at least once.
 - Vary the sentence structure a lot: reported speech, direct quotes, passive voice, fronted time phrases, different verbs and nouns, a short clause added before or after.
 - One or two sentences each. Never use he, she, his, her or him.
-- Do not add any new facts, numbers, times, names or places.
+- Do not add any new facts, numbers, times, names or places.{extra}
 Original: {seed}
 Answer with a JSON list of {n} strings and nothing else."""
+
+# Generic structural hints for kinds whose roles are easy to confuse.
+EXTRA = {
+    "witness_alibi": "\n- Vary who is named first: sometimes [SUSPECT] first, sometimes [WITNESS] first, sometimes the "
+                     "speaker only at the end (for example '..., says [WITNESS].'). It must stay clear that [WITNESS] "
+                     "is the one making the claim and that both were together.",
+    "sighting": "\n- Vary who is named first; it must stay clear that [PERSON] is the one who saw [OTHER].",
+    "claim": "\n- Sometimes put the time first, sometimes the place first.",
+    "record": "\n- Name many kinds of record: tills, ticket gates, door logs, phone data, taxi apps, cameras.",
+}
 
 GENDERED = re.compile(r"\b(he|she|his|her|him|himself|herself|hers)\b", re.I)
 FIRST = re.compile(r"\b(I|me|my|we|us|our)\b")
@@ -229,6 +243,8 @@ def rule_ok(kind: str, s: str) -> str | None:
         return "chars"
     if GENDERED.search(s):
         return "pronoun"
+    if s.startswith("[ROOM]") or re.search(r"\bon \[TIME\]", s):
+        return "awkward"
     outside = re.sub(r'"[^"]*"', "", s)
     if FIRST.search(outside):
         return "first person"
@@ -286,12 +302,16 @@ def to_template(kind: str, s: str) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--model", default="qwen2.5-coder:7b")
+    ap.add_argument("--model", default="qwen2.5-coder:7b", help="checker (and default generator)")
+    ap.add_argument("--gen-model", default=None, help="paraphrasing model, if different from --model")
+    ap.add_argument("--out", default=str(OUT))
     ap.add_argument("--rounds", type=int, default=8, help="generation requests per kind")
     ap.add_argument("--n", type=int, default=8, help="paraphrases per request")
     ap.add_argument("--kinds", default=",".join(KINDS))
     args = ap.parse_args()
-    bank = json.loads(OUT.read_text()) if OUT.exists() else {}
+    out_path = Path(args.out)
+    gen_model = args.gen_model or args.model
+    bank = json.loads(out_path.read_text()) if out_path.exists() else {}
     stats = {}
     rng = random.Random(0)
     for kind in args.kinds.split(","):
@@ -302,9 +322,10 @@ def main() -> None:
         t0 = time.time()
         for _ in range(args.rounds):
             seed = rng.choice(spec["seeds"])
-            prompt = GEN.format(n=args.n, meaning=spec["meaning"], seed=seed,
+            prompt = GEN.format(n=args.n, meaning=spec["meaning"], seed=seed, extra=EXTRA.get(kind, ""),
                                 tokens=", ".join(f"[{k}]" for k in spec["fields"]) or "(none)")
-            out = parse_json(ask(args.model, prompt, 0.9))
+            raw = ask(gen_model, prompt, 0.9, max_tokens=3000 if "r1" in gen_model else 1200)
+            out = parse_json(re.sub(r"<think>.*?</think>", "", raw, flags=re.S))   # reasoning models think first
             for s in out if isinstance(out, list) else []:
                 if not isinstance(s, str):
                     continue
@@ -323,7 +344,7 @@ def main() -> None:
         bank[kind] = sorted(seen | set(kept))
         stats[kind] = {"candidates": len(cand), "kept": len(kept), "rejected": reasons, "seconds": round(time.time() - t0)}
         print(kind, stats[kind], flush=True)
-        OUT.write_text(json.dumps(bank, indent=1, ensure_ascii=False))
+        out_path.write_text(json.dumps(bank, indent=1, ensure_ascii=False))
     print("bank sizes:", {k: len(v) for k, v in bank.items()})
 
 
