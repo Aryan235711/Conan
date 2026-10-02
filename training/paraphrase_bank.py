@@ -243,7 +243,8 @@ def rule_ok(kind: str, s: str) -> str | None:
         return "chars"
     if GENDERED.search(s):
         return "pronoun"
-    if s.startswith("[ROOM]") or re.search(r"\bon \[TIME\]", s):
+    # a sentence must not open with a place (it would start lower-case: "the café was ...")
+    if re.match(r"\[(ROOM|PLACE)\]", s) or re.search(r"\bon \[TIME\]", s):
         return "awkward"
     outside = re.sub(r'"[^"]*"', "", s)
     if FIRST.search(outside):
