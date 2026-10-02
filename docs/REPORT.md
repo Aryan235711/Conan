@@ -617,6 +617,45 @@ training on the three families has pushed out. That is the job of the new
 reasoning types planned for v11. Tier A's traps were designed after seeing
 v7.1 fail them, so the prose test remains the cleaner measure.
 
+### SFT v9.2: paraphrases from a second source
+
+v9.1 solved about 97% of the prose cases whose decisive paragraphs it read
+correctly, so reading was still the bottleneck. Its errors were sentence
+structures the grammar never produced, plus a format problem: the reading step
+listed key holders alphabetically, which a small model does badly.
+
+v9.2 adds paraphrases from a local model (qwen2.5-coder 7B, run with ollama on
+the laptop; `training/paraphrase_bank.py`). The model is never shown the held-out
+test wording. A paraphrase is kept only if it passes rule checks (every
+placeholder, no numbers, pronouns or stray first person, no four-word run of a
+test template, claims must sound like claims and records like records) and a
+round trip: filled with real values, a separate extraction prompt must recover
+the fact type and every field exactly. On a control set of deliberately wrong
+paraphrases the checker accepted none of 15. 497 of 694 candidates survived,
+across 11 fact types. Key holders are now listed in the order the text names
+them. v9.2 continued from v9.1 (547 steps, about 8 hours).
+
+| Held-out | v9.1 | v9.2 |
+|---|---|---|
+| Prose test, 150 cases, unseen phrasing | 66% (58-73) | **72% (64-79)** |
+| &nbsp;&nbsp;timeline / lying witness / combined, 50 each | 74% / 74% / 50% | 84% / 78% / 54% |
+| &nbsp;&nbsp;paragraphs read right | 77-78% | 80-83% |
+| Prose in training phrasings, 60 cases | 87% | **97%** |
+| Reliability suite | 5 of 12 | 5 of 12 |
+| Lying-witness family, 100 cases | 98% | 99% |
+| Combined family, 100 cases | 92% | **97% (92-99)** |
+| Timeline family, 100 cases | 85% | **91% (84-95)** |
+| Lookup probe | 90% | 93% ("no record" 18/18) |
+
+v9.2 is the best model on every split. The prose gain is smaller than v9.1's
+and not yet certain: on the same 150 cases v9.2 alone was right on 25 and v9.1
+alone on 16 (exact two-sided p = 0.21), though every family moved up. The
+combined family is still the weakest on prose (54%) even though 81% of its
+paragraphs are read right: with 25 or more paragraphs per case, one misread
+decisive paragraph is enough to fail. Wording variety is giving less each
+round (v9.1 +23 points, v9.2 about +6), so the next step should change
+approach rather than add more wording.
+
 ## 6. Training pipeline
 
 - **SFT warm-up.** Reasoning traces are written from the solver's facts in a

@@ -33,6 +33,7 @@ brackets.
 | Qwen2.5 0.5B, SFT v7.1 (timeline, 100 cases) | 84% (76-90) | 82% | | 4% |
 | Qwen2.5 0.5B, SFT v9 (timeline, 100 cases) | 85% (77-91) | 83% | | 3% |
 | Qwen2.5 0.5B, SFT v9.1 (timeline, 100 cases) | 85% (77-91) | 85% | | 0% |
+| Qwen2.5 0.5B, SFT v9.2 (timeline, 100 cases) | 91% (84-95) | 87% | | 4% |
 | Qwen2.5 Coder 7B, untrained (20 cases) | 5% (1-24) | 0% | 0.16 | |
 
 On the combined family, where the model must catch a lying witness before
@@ -70,6 +71,13 @@ accuracy to **66% (58-73)**, reading 76-78% of unseen paragraphs exactly, with
 the templated families unchanged (lying witness 98%, combined 92%, timeline
 85%). It solves 5 of 6 hand-written prose cases in the trained families but
 none of the 6 that need other reasoning types.
+
+SFT v9.2 adds paraphrases written by a local 7B model and kept only after a
+round-trip check recovers every fact exactly (the checker rejected all 15
+deliberately wrong paraphrases in a control set). Held-out prose rises to
+**72% (64-79)**, and v9.2 is the best model on every split: lying witness 99%,
+combined **97%**, timeline **91%** (100 cases each). Long combined cases in
+prose (54%) are the remaining gap.
 
 The path to 83.5% came from diagnosis rather than more training:
 
