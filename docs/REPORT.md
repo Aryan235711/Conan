@@ -656,6 +656,39 @@ decisive paragraph is enough to fail. Wording variety is giving less each
 round (v9.1 +23 points, v9.2 about +6), so the next step should change
 approach rather than add more wording.
 
+### SFT v9.3: a reading curriculum
+
+v9.2 solved 94% of prose cases whose decisive paragraphs it read right, and
+its commonest misreading was an alibi claim read as the speaker's own claim
+(the companion dropped) or with speaker and companion swapped. Reading is also
+only about a tenth of the tokens in a full trace. So v9.3 gives reading its own
+curriculum: 4,000 short items of one to four paragraphs with their reading
+lines, weighted towards alibi claims, sightings and statements, plus a larger
+verified paraphrase bank (a second generator, deepseek-r1 8B, under the same
+checks; alibi claims 27 -> 161 patterns).
+
+| Held-out | v9.2 | v9.3 |
+|---|---|---|
+| Prose test, 150 cases | 72% (64-79) | **75% (68-82)** |
+| &nbsp;&nbsp;timeline / lying witness / combined | 84% / 78% / 54% | 84% / **88%** / 54% |
+| &nbsp;&nbsp;alibi claims read right | 65% | **84%** |
+| Prose in training phrasings, 60 cases | 97% | 92% |
+| Lying-witness / combined / timeline, 100 each | 99% / 97% / 91% | 98% / 94% / 91% |
+| Lookup probe | 93% | **71%** |
+| Reliability suite | 5 of 12 | 3 of 12 |
+
+The targeted skill improved a lot: alibi claims are read right 84% of the time
+instead of 65%, and lying-witness prose rose to 88%. The overall prose gain is
+small and uncertain (paired 19 vs 14, p = 0.49). Combined cases did not move
+(54%): each has about nine decisive paragraphs, and at 90% per paragraph all
+nine are read right only about a third of the time (16 of 50 here). Combined
+prose needs near-perfect reading per paragraph, not just better reading.
+
+v9.3 also regressed on record lookup (93% -> 71%): it lists the right records,
+then answers "no record" even when one matches the time. Its training mix held
+only 60 lookup items, all from a batch weighted towards "no record". v9.4 is a
+short repair run with balanced lookup items and replay.
+
 ## 6. Training pipeline
 
 - **SFT warm-up.** Reasoning traces are written from the solver's facts in a

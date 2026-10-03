@@ -79,6 +79,12 @@ deliberately wrong paraphrases in a control set). Held-out prose rises to
 combined **97%**, timeline **91%** (100 cases each). Long combined cases in
 prose (54%) are the remaining gap.
 
+SFT v9.3 adds a reading curriculum (short paragraph-reading items) and a larger
+verified paraphrase bank: alibi claims are read right 84% of the time instead
+of 65%, held-out prose reaches **75% (68-82)**, and lying-witness prose 88%.
+Combined prose stays at 54%, and record lookup regressed (93% -> 71%); a short
+repair run (v9.4) is in progress.
+
 The path to 83.5% came from diagnosis rather than more training:
 
 1. A step-by-step error analysis showed models ruled out the real culprit
