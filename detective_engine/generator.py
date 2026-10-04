@@ -398,6 +398,9 @@ SPLITS = {
     # Combined family: timeline + lying witness (levels 2-3 only).
     "combo_train": (1000, 7, (2, 3), "A", "composite"),
     "combo_test": (200, 8, (2, 3), "A", "composite"),
+    # v11 family 1: one or two liars, stated in the rule (half each).
+    "mliar_train": (1500, 81, (2, 3), "A", "multi_liar"),
+    "mliar_test": (200, 82, (2, 3), "A", "multi_liar"),
 }
 
 
@@ -408,10 +411,12 @@ def main() -> None:
     args = ap.parse_args()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    from . import composite, liar
-    prefixes = {"liar_test": "LT", "liar_train": "LR", "combo_train": "CR", "combo_test": "CT"}
+    from . import composite, liar, multi_liar
+    prefixes = {"liar_test": "LT", "liar_train": "LR", "combo_train": "CR", "combo_test": "CT",
+                "mliar_train": "MR", "mliar_test": "MT"}
     for name, (count, seed, levels, pool, family) in SPLITS.items():
-        gen = {"liar": liar.generate, "composite": composite.generate}.get(family, generate)
+        gen = {"liar": liar.generate, "composite": composite.generate,
+               "multi_liar": multi_liar.generate}.get(family, generate)
         prefix = prefixes.get(name, name[:2].upper())
         cases = gen(max(1, int(count * args.scale)), seed, levels, pool, prefix=prefix)
         with open(out / f"{name}.jsonl", "w", encoding="utf-8") as f:

@@ -164,6 +164,19 @@ def agent_solver(case, prompt, raw):
         return {"most_likely": top, "probabilities": {f"S{i}": float(f"S{i}" == top) for i in range(1, len(labels) + 1)},
                 "ruled_out": [f"S{i}" for i in range(1, len(labels) + 1) if f"S{i}" != top],
                 "key_evidence": key, "red_herrings": herr, "time_window": {"earliest": fmt(lo), "latest": fmt(hi)}}
+    if raw["generator"].get("family") == "multi_liar":
+        from . import multi_liar
+        g = raw["generator"]
+        sets = [frozenset(s) for s in g["scenario_sets"]]
+        sol = multi_liar.solve(facts, g["witnesses"], g["n_places"], g["k"])
+        top = f"S{sets.index(next(iter(sol))) + 1}"
+        key = [f"E{i}" for i, f in enumerate(facts, 1) if f.kind != "rule"
+               and multi_liar.solve([h for h in facts if h is not f], g["witnesses"], g["n_places"], g["k"]) != sol]
+        herr = [f"E{i}" for i, f in enumerate(facts, 1) if f.kind in ("demeanour", "salient")]
+        n = len(sets)
+        return {"most_likely": top, "probabilities": {f"S{i}": float(f"S{i}" == top) for i in range(1, n + 1)},
+                "ruled_out": [f"S{i}" for i in range(1, n + 1) if f"S{i}" != top],
+                "key_evidence": key, "red_herrings": herr}
     if raw["generator"].get("family") == "liar":
         from . import liar
         names = [_scenario_person(s) for s in case.scenarios]

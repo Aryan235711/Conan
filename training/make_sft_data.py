@@ -109,7 +109,10 @@ def _read_fact(f: Fact, text: str = "") -> str:
             return f"{d['speaker']} says they were at {atoms[0][2]} at {fmt(atoms[0][1])}"
         return f"{d['speaker']} says they and {atoms[1][0]} were at {atoms[0][2]} at {fmt(atoms[0][1])}"
     if k == "rule":
-        return "the rule: one witness lies, records are reliable"
+        n = d.get("k", 1)
+        if n == 1:
+            return "the rule: one witness lies, records are reliable"
+        return f"the rule: {['', 'one', 'two', 'three'][n]} witnesses lie, records are reliable"
     return "background only, no fact about who or when"
 
 
@@ -237,6 +240,61 @@ def write_liar_trace(raw: dict) -> str:
         lines.append(f"{eid[i]}: describes behaviour or background, not where anyone was, so it proves nothing.")
     answer = agent_solver(case, "", raw)
     lines.append(f"\nConclusion: {liar} ({sid[liar]}) is lying.")
+    lines.append(_answer_block(answer))
+    return "\n".join(lines)
+
+
+def write_multi_liar_trace(raw: dict) -> str:
+    """Trace for the k-liar family: read how many lie, check every statement, count the liars."""
+    g = raw["generator"]
+    facts, k = g["facts"], g["k"]
+    eid = {i: f"E{f.get('para', i)}" for i, f in enumerate(facts, 1)}
+    sid = {frozenset(s): f"S{i}" for i, s in enumerate(g["scenario_sets"], 1)}
+    words = ["", "one", "two", "three"]
+    records = [(i, tuple(a)) for i, f in enumerate(facts, 1) if f["kind"] == "record" for a in f["data"]["atoms"]]
+    lines = _read_pass(raw) if READ else []
+    rule_e = next(eid[i] for i, f in enumerate(facts, 1) if f["kind"] == "rule")
+    lines.append(f"Step 1 - {rule_e}: exactly {words[k]} witness{'es are' if k > 1 else ' is'} lying, "
+                 "so every statement must be checked.")
+    lines.append("Records are reliable, so each fixes where one person was at one time.")
+    for i, (p, tm, l, _) in records:
+        lines.append(f"{eid[i]}: {p} was at {l} at {fmt(tm)}.")
+    lines.append("\nStep 2 - Check what each statement implies against the records.")
+    rec_at = {(rp, rt): (j, rl) for j, (rp, rt, rl, _) in records}
+    by_person: dict[str, list] = {}
+    for j, (rp, rt, rl, _) in records:
+        by_person.setdefault(rp, []).append((rt, j, rl))
+    lines.append("Records by person:")
+    for rp in sorted(by_person):
+        lines.append(f"{rp}: " + "; ".join(f"{eid[j]} {rl} at {fmt(rt)}" for rt, j, rl in sorted(by_person[rp])) + ".")
+    liars: list[str] = []
+    for i, f in enumerate(facts, 1):
+        if f["kind"] != "statement":
+            continue
+        spk = f["data"]["speaker"]
+        for p, tm, l, _ in (tuple(a) for a in f["data"]["atoms"]):
+            who = f"{spk} was" if p == spk else f"{p} was"
+            mine = sorted(by_person.get(p, []))
+            line = (f"{eid[i]}: {spk}'s statement means {who} at {l} at {fmt(tm)}. Records for {p}: "
+                    + ("; ".join(f"{eid[j]} {rl} at {fmt(rt)}" for rt, j, rl in mine) if mine else "none") + ". ")
+            if (p, tm) in rec_at:
+                j, rl = rec_at[(p, tm)]
+                if rl == l:
+                    line += f"{eid[j]} agrees."
+                else:
+                    line += f"{eid[j]} shows {p} at {rl} at {fmt(tm)}; different place, so this is false."
+                    if spk not in liars:
+                        liars.append(spk)
+            else:
+                line += f"No record for {p} at {fmt(tm)}, so nothing contradicts it."
+            lines.append(line)
+    named = " and ".join(liars)
+    lines.append(f"Contradicted statements come from {words[len(liars)]} witness{'es' if len(liars) > 1 else ''}: "
+                 f"{named}. The rule says {words[k]}, so {named} {'are' if k > 1 else 'is'} lying and everyone else fits.")
+    lines.append("\nStep 3 - Red herrings: " + ", ".join(raw["answer_key"]["red_herrings"])
+                 + " (behaviour or background, not where anyone was).")
+    answer = agent_solver(CaseDefinition.from_dict(raw), "", raw)
+    lines.append(f"\nConclusion: {named} ({sid[frozenset(liars)]}) {'are' if k > 1 else 'is'} lying.")
     lines.append(_answer_block(answer))
     return "\n".join(lines)
 
@@ -370,6 +428,8 @@ def write_trace(raw: dict) -> str:
         return write_composite_trace(raw)
     if raw["generator"].get("family") == "liar":
         return write_liar_trace(raw)
+    if raw["generator"].get("family") == "multi_liar":
+        return write_multi_liar_trace(raw)
     case = CaseDefinition.from_dict(raw)
     facts, eid = _fact_ids(raw)
     label_of = {}
