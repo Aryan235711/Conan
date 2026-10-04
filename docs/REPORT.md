@@ -689,6 +689,30 @@ then answers "no record" even when one matches the time. Its training mix held
 only 60 lookup items, all from a batch weighted towards "no record". v9.4 is a
 short repair run with balanced lookup items and replay.
 
+### SFT v9.4: repairing lookup
+
+v9.4 is a short run from v9.3 (260 steps, half the learning rate) on 400 lookup
+items at the original balance (20% "no record") with replay of reading items,
+prose and templated traces.
+
+| Held-out | v9.2 | v9.3 | v9.4 |
+|---|---|---|---|
+| Lookup probe | 93% | 71% | **93%** |
+| Prose test, 150 cases | 72% | 75% | **77% (69-83)** |
+| &nbsp;&nbsp;timeline / lying witness / combined | 84 / 78 / 54% | 84 / 88 / 54% | 80 / 84 / **66%** |
+| Lying-witness family, 100 cases | 99% | 98% | 99% |
+| Combined family, 100 cases | **97%** | 94% | 90% (83-94) |
+| Timeline family, 100 cases | 91% | 91% | 94% |
+| Prose in training phrasings, 60 cases | 97% | 92% | 92% |
+| Reliability suite | 5 of 12 | 3 of 12 | 4 of 12 |
+
+The repair worked: lookup is back to 93%, and v9.4 is the best model on
+held-out prose (77%), with combined prose up from 54% to 66%. It is not a free
+upgrade: on templated combined cases it lost 7 that v9.2 solved and gained none
+(exact paired p = 0.016). The prose gains over v9.3 are within noise (14 vs 12
+paired). Across v9.x, held-out prose rose from 29% (v7.1) to 77% while the
+templated families stayed at 90-99%.
+
 ## 6. Training pipeline
 
 - **SFT warm-up.** Reasoning traces are written from the solver's facts in a

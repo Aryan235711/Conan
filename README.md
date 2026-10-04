@@ -34,6 +34,7 @@ brackets.
 | Qwen2.5 0.5B, SFT v9 (timeline, 100 cases) | 85% (77-91) | 83% | | 3% |
 | Qwen2.5 0.5B, SFT v9.1 (timeline, 100 cases) | 85% (77-91) | 85% | | 0% |
 | Qwen2.5 0.5B, SFT v9.2 (timeline, 100 cases) | 91% (84-95) | 87% | | 4% |
+| Qwen2.5 0.5B, SFT v9.4 (timeline, 100 cases) | 94% (88-97) | | | 1% |
 | Qwen2.5 Coder 7B, untrained (20 cases) | 5% (1-24) | 0% | 0.16 | |
 
 On the combined family, where the model must catch a lying witness before
@@ -83,7 +84,9 @@ SFT v9.3 adds a reading curriculum (short paragraph-reading items) and a larger
 verified paraphrase bank: alibi claims are read right 84% of the time instead
 of 65%, held-out prose reaches **75% (68-82)**, and lying-witness prose 88%.
 Combined prose stays at 54%, and record lookup regressed (93% -> 71%); a short
-repair run (v9.4) is in progress.
+repair run (v9.4) restores lookup to 93% and reaches **77% (69-83)** on
+held-out prose (combined prose 66%), at a cost on templated combined cases
+(97% -> 90%, paired p = 0.016). Held-out prose has gone from 29% (v7.1) to 77%.
 
 The path to 83.5% came from diagnosis rather than more training:
 
