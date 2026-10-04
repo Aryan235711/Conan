@@ -631,6 +631,12 @@ SPLITS = {
     "prose_wide3_train": [("timeline", 1000, 51, (2, 3), "A", "wide3", "PYT"),
                           ("liar", 1000, 52, (2, 3), "A", "wide3", "PYL"),
                           ("composite", 1200, 53, (2, 3), "A", "wide3", "PYC")],
+    # A second, untouched held-out prose test (new worlds and names, same held-out
+    # phrasing bank). prose_test guided five rounds of decisions, so final numbers
+    # for the v9 series are reported on this one too.
+    "prose_test2": [("timeline", 50, 74, (2, 3), "B", "test", "PQT"),
+                    ("liar", 50, 75, (2, 3), "B", "test", "PQL"),
+                    ("composite", 50, 76, (2, 3), "B", "test", "PQC")],
     "prose_test": [("timeline", 50, 24, (2, 3), "B", "test", "PXT"),
                    ("liar", 50, 25, (2, 3), "B", "test", "PXL"),
                    ("composite", 50, 26, (2, 3), "B", "test", "PXC")],
