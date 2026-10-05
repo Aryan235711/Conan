@@ -297,12 +297,17 @@ def write_multi_liar_trace(raw: dict) -> str:
         # Name order differs between the trace and the scenario list, so the
         # scenario is looked up explicitly (v11a named the right liars but the
         # wrong scenario in every two-liar miss).
+        # v11b listed the matching scenarios in one go and got the list wrong about
+        # three times in four; each scenario is now checked on its own line.
         first, second = liars[0], liars[1]
-        cand = [(i, s) for i, s in enumerate(g["scenario_sets"], 1) if first in s]
-        lines.append(f"\nStep 4 - Find the scenario. Scenarios naming {first}: "
-                     + "; ".join(f"S{i} ({' and '.join(s)})" for i, s in cand) + ".")
-        hit = next(i for i, s in cand if second in s)
-        lines.append(f"Of these, only S{hit} also names {second}.")
+        lines.append(f"\nStep 4 - Find the scenario that names both {first} and {second}.")
+        hit = None
+        for i, s in enumerate(g["scenario_sets"], 1):
+            a1, a2 = ("yes" if first in s else "no"), ("yes" if second in s else "no")
+            lines.append(f"S{i} ({' and '.join(s)}): {first} {a1}, {second} {a2}.")
+            if a1 == a2 == "yes":
+                hit = i
+        lines.append(f"Only S{hit} names both.")
     answer = agent_solver(CaseDefinition.from_dict(raw), "", raw)
     lines.append(f"\nConclusion: {named} ({sid[frozenset(liars)]}) {'are' if k > 1 else 'is'} lying.")
     lines.append(_answer_block(answer))
