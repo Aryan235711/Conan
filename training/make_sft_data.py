@@ -293,6 +293,16 @@ def write_multi_liar_trace(raw: dict) -> str:
                  f"{named}. The rule says {words[k]}, so {named} {'are' if k > 1 else 'is'} lying and everyone else fits.")
     lines.append("\nStep 3 - Red herrings: " + ", ".join(raw["answer_key"]["red_herrings"])
                  + " (behaviour or background, not where anyone was).")
+    if k > 1:
+        # Name order differs between the trace and the scenario list, so the
+        # scenario is looked up explicitly (v11a named the right liars but the
+        # wrong scenario in every two-liar miss).
+        first, second = liars[0], liars[1]
+        cand = [(i, s) for i, s in enumerate(g["scenario_sets"], 1) if first in s]
+        lines.append(f"\nStep 4 - Find the scenario. Scenarios naming {first}: "
+                     + "; ".join(f"S{i} ({' and '.join(s)})" for i, s in cand) + ".")
+        hit = next(i for i, s in cand if second in s)
+        lines.append(f"Of these, only S{hit} also names {second}.")
     answer = agent_solver(CaseDefinition.from_dict(raw), "", raw)
     lines.append(f"\nConclusion: {named} ({sid[frozenset(liars)]}) {'are' if k > 1 else 'is'} lying.")
     lines.append(_answer_block(answer))
