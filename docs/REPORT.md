@@ -713,6 +713,30 @@ upgrade: on templated combined cases it lost 7 that v9.2 solved and gained none
 paired). Across v9.x, held-out prose rose from 29% (v7.1) to 77% while the
 templated families stayed at 90-99%.
 
+### SFT v9.5: consolidation, and a fresh prose test
+
+v9.5 is a short replay-heavy run from v9.4 (300 templated combined traces plus
+replay of every other skill, 287 steps, half learning rate) to win back the
+templated combined cases v9.4 lost. Because prose_test had guided five rounds of
+decisions, a second held-out prose test (prose_test2: new worlds and names, the
+same held-out phrasing bank) was added before v9.5 was evaluated.
+
+| Held-out | v9.4 | v9.5 |
+|---|---|---|
+| prose_test2, fresh, 150 cases | **80% (73-86)** | 76% (69-82) |
+| &nbsp;&nbsp;timeline / lying witness / combined | 88 / 76 / 76% | 88 / 72 / 68% |
+| prose_test (used for earlier decisions) | 77% | 83% |
+| Combined family, 100 cases | 90% | **96% (90-98)** |
+| Lying-witness / timeline, 100 each | 99% / 94% | 99% / 93% |
+| Lookup probe | 93% | 92% |
+| Reliability suite | 4 of 12 | 5 of 12 |
+
+On the fresh test the two are equivalent (paired 12 vs 18, p = 0.36); v9.5's
+83% on the original test did not replicate, which is what a test used for
+selection does. The honest prose number for the v9 series is about 76-80% on
+phrasing never trained on (v7.1: 29%). v9.5 recovers the templated combined
+family, so it is the best all-round model and the base for v11.
+
 ## 6. Training pipeline
 
 - **SFT warm-up.** Reasoning traces are written from the solver's facts in a

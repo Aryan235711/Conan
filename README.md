@@ -87,6 +87,9 @@ Combined prose stays at 54%, and record lookup regressed (93% -> 71%); a short
 repair run (v9.4) restores lookup to 93% and reaches **77% (69-83)** on
 held-out prose (combined prose 66%), at a cost on templated combined cases
 (97% -> 90%, paired p = 0.016). Held-out prose has gone from 29% (v7.1) to 77%.
+SFT v9.5, a short consolidation run, recovers templated combined cases (96%)
+and keeps prose; on a fresh, untouched prose test v9.4 and v9.5 score 80% and
+76% (a tie within noise). That 76-80% is the honest prose figure for v9.
 
 The path to 83.5% came from diagnosis rather than more training:
 
