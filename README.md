@@ -91,6 +91,12 @@ SFT v9.5, a short consolidation run, recovers templated combined cases (96%)
 and keeps prose; on a fresh, untouched prose test v9.4 and v9.5 score 80% and
 76% (a tie within noise). That 76-80% is the honest prose figure for v9.
 
+v11 adds the first new reasoning type: the rule states how many witnesses lie
+(one or two). Before training, two-liar cases scored 11 of 50; after v11c, whose
+traces check each scenario on its own line, **98 of 100**, with one-liar cases
+at 98 and the other families held (combined 97%, lying witness 100%). Timeline
+cases dipped (87% vs 93%); a short consolidation run is next.
+
 The path to 83.5% came from diagnosis rather than more training:
 
 1. A step-by-step error analysis showed models ruled out the real culprit

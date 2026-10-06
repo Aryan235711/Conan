@@ -737,6 +737,37 @@ selection does. The honest prose number for the v9 series is about 76-80% on
 phrasing never trained on (v7.1: 29%). v9.5 recovers the templated combined
 family, so it is the best all-round model and the base for v11.
 
+### v11: how many witnesses are lying?
+
+The lying-witness family always has exactly one liar, so a model can stop at
+the first contradiction. The first new reasoning type (`detective_engine/multi_liar.py`)
+states the number of liars in the rule, one or two, half the cases each, and
+keeps a case only if exactly one set of that many witnesses fits the records
+and the other statements. A two-liar case with five witnesses has ten
+scenarios. It was designed from general principles; the private reliability
+cases were not read.
+
+| mliar_test (100 per kind) | one liar | two liars |
+|---|---|---|
+| v9.5, before training (50 each) | 49/50 | 11/50 |
+| v11a: 1,000 k-liar traces + replay | 99 | 42 |
+| v11b: one-step scenario lookup in traces | 99 | 36 |
+| v11c: each scenario checked on its own line | 98 | **98 (93-99)** |
+
+v11a found both liars in every two-liar case it got wrong; it failed to map the
+pair onto the right scenario, because the names come out in a different order
+than the scenario list. A trace step that listed "the scenarios naming X" in one
+go made it worse: the model got that list wrong about three times in four.
+Checking each scenario on its own line ("S3 (A and B): A yes, C no") took two
+liars from 42% to 98%. The same lesson as the alibi comparison and the record
+lookup: a small model fails at a search done in one step and succeeds when each
+comparison is written out.
+
+v11c kept the other families (combined 97%, lying witness 100%, lookup 89%,
+fresh prose 76%) but leaned worse on timeline cases (87% vs v9.5's 93%, paired
+4 vs 10, p = 0.18; timeline prose 38 vs 44 of 50). A short timeline-heavy
+consolidation (v11d) follows.
+
 ## 6. Training pipeline
 
 - **SFT warm-up.** Reasoning traces are written from the solver's facts in a
