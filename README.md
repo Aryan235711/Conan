@@ -95,7 +95,9 @@ v11 adds the first new reasoning type: the rule states how many witnesses lie
 (one or two). Before training, two-liar cases scored 11 of 50; after v11c, whose
 traces check each scenario on its own line, **98 of 100**, with one-liar cases
 at 98 and the other families held (combined 97%, lying witness 100%). Timeline
-cases dipped (87% vs 93%); a short consolidation run is next.
+cases dipped (87% vs 93%); a short timeline consolidation (v11d) recovered them
+(95%) and kept two liars at 97%. **v11d is the best model on every split**: lying
+witness 100%, combined 98%, timeline 95%, lookup 95%, fresh held-out prose 79%.
 
 The path to 83.5% came from diagnosis rather than more training:
 
