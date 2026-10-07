@@ -114,3 +114,6 @@ BLUEPRINT.md
 benchmarks/reliability/source/
 benchmarks/reliability/cases.jsonl
 GAME_BLUEPRINT.md
+
+# Hand-written spot-check cases: evaluation only, never trained on
+data/spotcheck/
