@@ -414,8 +414,22 @@ def write_composite_trace(raw: dict) -> str:
             else:
                 lines.append(f"So this alibi does not clear {d['suspect']}.")
 
+    # Verified alibis (records covering a span; the mixed-alibi family) are checked the same way.
+    for f in by("alibi"):
+        name, a0, b0 = f.data["name"], f.data["start"], f.data["end"]
+        if name not in keyholders:
+            continue
+        lines.append(f"{eid[id(f)]}: {name} is verified from {fmt(a0)} to {fmt(b0)}.")
+        lines += (explain_coverage_compact(a0, b0, lo, hi, rewrite=False) if COMPACT and not VERBOSE_COMPARE
+                  else explain_coverage(a0, b0, lo, hi, who=f"{name}'s alibi"))
+        if a0 <= lo and b0 >= hi:
+            lines.append(f"So {name} ({label_of[name]}) is ruled out.")
+        else:
+            lines.append(f"So this alibi does not clear {name}.")
+
     cleared = {c.data["suspect"] for c in by("witness_alibi")
                if c.data["witness"] != liar and c.data["start"] <= lo and c.data["end"] >= hi}
+    cleared |= {f.data["name"] for f in by("alibi") if f.data["start"] <= lo and f.data["end"] >= hi}
     remaining = [(s, n) for s, n in remaining if n not in cleared]
     if TRACK:
         lines.append(_still(remaining))
@@ -439,7 +453,7 @@ def write_composite_trace(raw: dict) -> str:
 
 
 def write_trace(raw: dict) -> str:
-    if raw["generator"].get("family") == "composite":
+    if raw["generator"].get("family") in ("composite", "mixed"):
         return write_composite_trace(raw)
     if raw["generator"].get("family") == "liar":
         return write_liar_trace(raw)

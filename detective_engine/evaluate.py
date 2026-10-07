@@ -148,7 +148,7 @@ def agent_solver(case, prompt, raw):
     if not raw or "generator" not in raw:
         return agent_uniform(case, prompt, raw)
     facts = [Fact(f["kind"], f["text"], f["data"], f["role"]) for f in raw["generator"]["facts"]]
-    if raw["generator"].get("family") == "composite":
+    if raw["generator"].get("family") in ("composite", "mixed"):
         from . import composite
         labels = ["accident" if s.endswith("was an accident.") else _scenario_person(s) for s in case.scenarios]
         suspects = [l for l in labels if l != "accident"]

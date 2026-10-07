@@ -35,7 +35,7 @@ import random
 from pathlib import Path
 from typing import Any
 
-from . import composite, liar
+from . import composite, liar, mixed
 from . import generator as timeline
 from . import prose_grammar as G
 from .generator import POOLS, death_window, fmt
@@ -333,7 +333,9 @@ def _merge_pairs(rng: random.Random, paras: list[dict], p: float, max_run: int =
 def _physical(world: dict, W: Writer) -> list[dict]:
     rng, v, room = W.rng, world["victim"], world["place"]
     by = {f.kind: f for f in world["facts"]}
-    d, bt, la = by["discovery"], by["body_temp"], by["last_alive"]
+    d, bt = by["discovery"], by["body_temp"]
+    signs = sorted((f for f in world["facts"] if f.kind == "last_alive"), key=lambda f: -f.data["time"])
+    la = signs[0]                                             # the latest sign of life fixes the window
     t, temp = d.data["time"], f"{bt.data['temp']:.1f}"
     paras = []
     if rng.random() < 0.6:
@@ -342,8 +344,8 @@ def _physical(world: dict, W: Writer) -> list[dict]:
     else:
         paras.append(_para(W.say("found", v=v, room=room, t=fmt(t)), [_fact("discovery", time=t)]))
         paras.append(_para(W.say("temp", t=fmt(t), temp=temp), [_fact("body_temp", temp=bt.data["temp"], discovery=t)]))
-    alive = [la.data["time"]]
-    if rng.random() < 0.35:                                   # an earlier sign of life; the later one fixes the window
+    alive = [f.data["time"] for f in signs]                   # the mixed family may already have two
+    if len(alive) == 1 and rng.random() < 0.35:               # an earlier sign of life; the later one fixes the window
         alive.append(la.data["time"] - rng.randint(40, 150))
     if W.wide:
         for tm in alive:
@@ -483,6 +485,10 @@ def composite_source(world: dict, W: Writer) -> dict:
         elif f.kind == "testimony":
             where = rng.choice(liar.PLACES[world["pool"]])
             rest.append(_para(W.say("testimony", s=d["name"], w=where), [_fact("testimony", name=d["name"])]))
+        elif f.kind == "alibi":                                # verified alibis (mixed-alibi family)
+            p = rng.choice(POOLS[world["pool"]]["alibi_place"])
+            rest.append(_para(W.say("alibi", s=d["name"], p=p, a=fmt(d["start"]), b=fmt(d["end"])),
+                              [_fact("alibi", name=d["name"], start=d["start"], end=d["end"])]))
         elif f.kind == "demeanour":
             rest.append(_para(W.say("demeanour", w=d["name"]), [], herring=True))
     rng.shuffle(records)
@@ -548,6 +554,7 @@ def liar_source(world: dict, W: Writer) -> dict:
 FAMILIES = {
     "timeline": (timeline.simulate, timeline_source),
     "composite": (composite.simulate, composite_source),
+    "mixed": (mixed.simulate, composite_source),
     "liar": (liar.simulate, liar_source),
 }
 
@@ -590,6 +597,8 @@ def make_case(family: str, rng: random.Random, level: int, pool: str, bank: str,
     case["category"] = f"generated-prose-{family}"
     case["solution"] = {"unlock_key": "GENERATED"}
     case["generator"].update({"version": 2, "level": level, "prose": True, "bank": bank})
+    if family == "mixed":                    # composite solver underneath; keep the family name for reports
+        case["generator"]["source_family"] = family
     return case
 
 
@@ -637,6 +646,9 @@ SPLITS = {
     "prose_test2": [("timeline", 50, 74, (2, 3), "B", "test", "PQT"),
                     ("liar", 50, 75, (2, 3), "B", "test", "PQL"),
                     ("composite", 50, 76, (2, 3), "B", "test", "PQC")],
+    # v11 family 2 in prose: training phrasing and names, and a held-out test.
+    "prose_mixed_train": [("mixed", 1000, 93, (2, 3), "A", "wide3", "PMR")],
+    "prose_mixed_test": [("mixed", 100, 94, (2, 3), "B", "test", "PMT")],
     "prose_test": [("timeline", 50, 24, (2, 3), "B", "test", "PXT"),
                    ("liar", 50, 25, (2, 3), "B", "test", "PXL"),
                    ("composite", 50, 26, (2, 3), "B", "test", "PXC")],
