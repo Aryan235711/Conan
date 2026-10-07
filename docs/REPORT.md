@@ -766,7 +766,23 @@ comparison is written out.
 v11c kept the other families (combined 97%, lying witness 100%, lookup 89%,
 fresh prose 76%) but leaned worse on timeline cases (87% vs v9.5's 93%, paired
 4 vs 10, p = 0.18; timeline prose 38 vs 44 of 50). A short timeline-heavy
-consolidation (v11d) follows.
+consolidation (v11d: 240 steps, half learning rate, 400 timeline traces plus
+replay including 150 k-liar traces) recovered it and kept the new skill:
+
+| Held-out | v9.5 | v11d |
+|---|---|---|
+| Two liars, 100 cases | 11 of 50 (before training) | **97** |
+| One liar, 100 cases | 49 of 50 | 99 |
+| Timeline family, 100 cases | 93% | **95% (89-98)** |
+| Combined family, 100 cases | 96% | **98% (93-99)** |
+| Lying-witness family, 100 cases | 99% | **100%** |
+| prose_test2, fresh, 150 cases | 76% | **79% (71-84)** |
+| Lookup probe | 92% | **95%** |
+| Reliability suite | 5 of 12 | 4 of 12 |
+
+v11d matches or beats v9.5 on every split (none of the paired differences is
+large enough to be certain on its own) and adds the two-liar skill. It is the
+best model so far.
 
 ## 6. Training pipeline
 
