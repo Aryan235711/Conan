@@ -784,6 +784,41 @@ v11d matches or beats v9.5 on every split (none of the paired differences is
 large enough to be certain on its own) and adds the two-liar skill. It is the
 best model so far.
 
+### A hand-written spot check, and v11 family 2: mixed alibi sources
+
+A new hand-written case (S-1, private, verified by the builder, seven traps) was
+given to v11d. It got the death window (two signs of life, across midnight),
+caught the lying witness, confirmed the honest one and applied access, then
+failed: it read a CCTV-verified alibi without the person's name, invented
+paragraphs past the end of a 16-paragraph case, and dropped the culprit from
+its list of remaining suspects. Verified alibis had only ever appeared in
+timeline cases and witness alibis in combined ones, and combined training
+cases had 23-31 paragraphs: the skills had not been learned in combination.
+(v7.1 answered S-1 correctly by luck, with a nonsense window.)
+
+`detective_engine/mixed.py` therefore puts verified and witness alibis, one
+lying witness and S-1's traps in one case, with 3-5 suspects and 16-27
+paragraphs, in templated and prose form.
+
+| Held-out | v11d (before) | v11e |
+|---|---|---|
+| Mixed alibis, templated, 200 cases | 48% (38-58), 100 cases | **95% (91-97)** |
+| Mixed alibis, prose, unseen phrasing, 100 cases | 47% (35-59), 60 cases | **63% (53-72)** |
+| Timeline / combined / lying witness, 100 each | 95 / 98 / 100% | 94 / 97 / 100% |
+| Two liars + one liar, 100 cases | 97% | 97% |
+| prose_test2, 150 cases | 79% | 74% (paired 14 vs 21, p = 0.31) |
+| Lookup probe | 95% | 94% |
+| Reliability suite | 4 of 12 | 6 of 12 |
+| Spot check S-1 | wrong | wrong |
+
+v11d scored 95-100% on each parent family and half that on their combination;
+after training, v11e combines them at 95% in the trained format with no loss
+elsewhere. S-1 is still wrong, at the same step: "Ferry CCTV shows Ines
+Achterberg on board the night ferry from 22:50 to 00:30" is read as "ferry from
+22:50 to 00:30". Each new reasoning type has been learned within a day or two;
+reading wording the model has not seen remains the limit of the 0.5B model,
+as in the v9 series.
+
 ## 6. Training pipeline
 
 - **SFT warm-up.** Reasoning traces are written from the solver's facts in a

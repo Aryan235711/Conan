@@ -99,6 +99,12 @@ cases dipped (87% vs 93%); a short timeline consolidation (v11d) recovered them
 (95%) and kept two liars at 97%. **v11d is the best model on every split**: lying
 witness 100%, combined 98%, timeline 95%, lookup 95%, fresh held-out prose 79%.
 
+A new hand-written case with seven traps showed v11d could not combine skills
+learned in separate families (it scored 48% when verified and witness alibis
+appeared together). A second v11 family mixes them: v11e reaches **95%** on it
+(63% in unseen prose) with the other families held. The hand-written case
+still fails at reading one sentence, the 0.5B model's remaining limit.
+
 The path to 83.5% came from diagnosis rather than more training:
 
 1. A step-by-step error analysis showed models ruled out the real culprit
