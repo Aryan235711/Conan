@@ -248,6 +248,8 @@ def make_agent_hf(path: str, max_new_tokens: int = 1024):
     else:
         tok = AutoTokenizer.from_pretrained(path)
         model = AutoModelForCausalLM.from_pretrained(path)
+    if device == "cuda":
+        model = model.half()            # half precision on GPU: faster, and enough for greedy decoding
     model.to(device).eval()
 
     def agent(case, prompt, raw):
@@ -257,6 +259,20 @@ def make_agent_hf(path: str, max_new_tokens: int = 1024):
             out = model.generate(**ids, max_new_tokens=max_new_tokens, do_sample=False,
                                  pad_token_id=tok.pad_token_id or tok.eos_token_id)
         return tok.decode(out[0][ids["input_ids"].shape[1]:], skip_special_tokens=True)
+
+    def batch(prompts: list[str]) -> list[str]:
+        """Greedy decoding for several prompts at once (left-padded); used on GPUs via --batch-size."""
+        tok.padding_side = "left"
+        if tok.pad_token_id is None:
+            tok.pad_token = tok.eos_token
+        texts = [tok.apply_chat_template([{"role": "user", "content": p}], add_generation_prompt=True, tokenize=False)
+                 for p in prompts]
+        ids = tok(texts, return_tensors="pt", padding=True).to(device)
+        with torch.no_grad():
+            out = model.generate(**ids, max_new_tokens=max_new_tokens, do_sample=False, pad_token_id=tok.pad_token_id)
+        return [tok.decode(o[ids["input_ids"].shape[1]:], skip_special_tokens=True) for o in out]
+
+    agent.batch = batch
     return agent
 
 
@@ -286,7 +302,7 @@ def _slug(spec: str) -> str:
     return re.sub(r"[^A-Za-z0-9._-]+", "_", spec)
 
 
-def run(spec: str, splits: list[str], limit: int | None, max_new_tokens: int = 1024) -> None:
+def run(spec: str, splits: list[str], limit: int | None, max_new_tokens: int = 1024, batch_size: int = 1) -> None:
     agent = get_agent(spec, max_new_tokens)
     # Runs with a non-default output budget are stored separately so results never mix.
     run_name = _slug(spec) + (f"_max{max_new_tokens}" if max_new_tokens != 1024 else "")
@@ -306,15 +322,28 @@ def run(spec: str, splits: list[str], limit: int | None, max_new_tokens: int = 1
             print(f"[{spec}] {split}: skipped (solver needs generated facts)")
             continue
         print(f"[{spec}] {split}: {len(todo)} to run ({len(done)} already done)", flush=True)
+        pre: dict[str, tuple] = {}      # answers generated a batch at a time (GPU only)
         for i, case in enumerate(todo, 1):
             prompt = build_prompt(case)
             t0 = time.time()
-            try:
-                answer = agent(case, prompt, raw_by_id.get(case.id))
-                error = None
-            except Exception as exc:  # network / model failures are recorded, scored 0
-                answer, error = "", f"{type(exc).__name__}: {exc}"
-            elapsed = time.time() - t0
+            if batch_size > 1 and hasattr(agent, "batch") and case.id not in pre:
+                chunk = todo[i - 1:i - 1 + batch_size]
+                try:
+                    outs = agent.batch([build_prompt(c) for c in chunk])
+                    for c, o in zip(chunk, outs):
+                        pre[c.id] = (o, None, (time.time() - t0) / len(chunk))
+                except Exception as exc:
+                    for c in chunk:
+                        pre[c.id] = ("", f"{type(exc).__name__}: {exc}", 0.0)
+            if case.id in pre:
+                answer, error, elapsed = pre.pop(case.id)
+            else:
+                try:
+                    answer = agent(case, prompt, raw_by_id.get(case.id))
+                    error = None
+                except Exception as exc:  # network / model failures are recorded, scored 0
+                    answer, error = "", f"{type(exc).__name__}: {exc}"
+                elapsed = time.time() - t0
             res = score_answer(case, answer)
             rec = {"case_id": case.id, "split": split,
                    "agent": spec + (f" (max {max_new_tokens} tokens)" if max_new_tokens != 1024 else ""),
@@ -387,9 +416,11 @@ def main() -> None:
     ap.add_argument("--limit", type=int, default=None, help="max cases per split")
     ap.add_argument("--report", action="store_true", help="print a markdown summary of runs/")
     ap.add_argument("--max-new-tokens", type=int, default=1024, help="output budget for hf: agents")
+    ap.add_argument("--batch-size", type=int, default=1, help="hf: agents on a GPU: prompts generated at once")
     args = ap.parse_args()
     if args.agent:
-        run(args.agent, [s.strip() for s in args.splits.split(",") if s.strip()], args.limit, args.max_new_tokens)
+        run(args.agent, [s.strip() for s in args.splits.split(",") if s.strip()], args.limit, args.max_new_tokens,
+            args.batch_size)
     if args.report or not args.agent:
         print(report())
 

@@ -40,6 +40,10 @@ def main() -> None:
                     help="recompute activations instead of storing them; needed for long examples on a 16 GB Mac")
     ap.add_argument("--save-steps", type=int, default=None, help="checkpoint interval (default: half the run)")
     ap.add_argument("--resume", action="store_true", help="resume from the latest checkpoint in --output")
+    ap.add_argument("--fp16", action="store_true",
+                    help="16-bit mixed precision instead of bf16, for GPUs without bf16 such as the T4")
+    ap.add_argument("--max-hours", type=float, default=None,
+                    help="stop cleanly after this many hours and save a checkpoint (rerun with --resume to continue)")
     args = ap.parse_args()
     if args.smoke:
         args.max_steps, args.grad_accum, args.limit = 2, 1, 4
@@ -59,7 +63,8 @@ def main() -> None:
 
     cuda = torch.cuda.is_available()
     # Load on CPU first: transformers' threaded loader segfaults on direct MPS placement.
-    model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.bfloat16 if cuda else torch.float32)
+    bf16 = cuda and not args.fp16
+    model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.bfloat16 if bf16 else torch.float32)
     config = SFTConfig(
         output_dir=args.output,
         max_steps=args.max_steps,
@@ -72,7 +77,8 @@ def main() -> None:
         logging_steps=5,
         save_steps=args.save_steps or max(50, args.max_steps // 2),
         gradient_checkpointing=args.gradient_checkpointing,
-        bf16=cuda,
+        bf16=bf16,
+        fp16=cuda and args.fp16,
         report_to=[],
         seed=args.seed,
     )
@@ -85,6 +91,17 @@ def main() -> None:
             def on_step_end(self, *a, **k):
                 torch.mps.empty_cache()
         callbacks.append(_EmptyMPSCache())
+    if args.max_hours:
+        import time
+        deadline = time.time() + args.max_hours * 3600
+
+        class _TimeLimit(TrainerCallback):
+            """Stop at a step boundary once the time budget is spent (free GPU sessions are capped)."""
+            def on_step_end(self, a, state, control, **k):
+                if time.time() > deadline:
+                    control.should_save = True
+                    control.should_training_stop = True
+        callbacks.append(_TimeLimit())
     trainer = SFTTrainer(model=model, args=config, train_dataset=ds, peft_config=peft_config, callbacks=callbacks)
     last = None
     if args.resume:
@@ -92,6 +109,9 @@ def main() -> None:
         last = str(ckpts[-1]) if ckpts else None
         print(f"resuming from {last}" if last else "no checkpoint found; starting fresh")
     trainer.train(resume_from_checkpoint=last)
+    if trainer.state.global_step < args.max_steps:
+        print(f"stopped at step {trainer.state.global_step} of {args.max_steps} (time limit); rerun with --resume")
+        return
     trainer.save_model(args.output)
     Path(args.output, "training_manifest.json").write_text(json.dumps(
         {"model": args.model, "examples": len(ds), "args": vars(args), "log_history": trainer.state.log_history},
