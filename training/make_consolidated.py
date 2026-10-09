@@ -8,7 +8,7 @@ trace files the chain already uses (all in the final trace format: reading
 step, text-order key holders, state tracking, written-out comparisons,
 per-person record lookup, line-by-line scenario scan).
 
-    python3 training/make_consolidated.py                 # data/kaggle/sft_all.jsonl (about 6,000 rows)
+    python3 training/make_consolidated.py                 # data/kaggle/sft_all.jsonl (about 6,900 rows)
     python3 training/make_consolidated.py --scale 0.4 --out data/generated/sft_all_small.jsonl
 """
 
@@ -25,11 +25,14 @@ G = ROOT / "data" / "generated"
 
 # (file, case-id prefix or None, rows at scale 1.0, label)
 PARTS = [
-    ("sft_interval.jsonl", None, 500, "curriculum: interval coverage"),
+    # The one-stage dry run on a 40% sample (0.5B) was weakest on timeline cases (66%) and on
+    # "no record" lookups (1 of 18), so both get more weight than the other parts.
+    ("sft_interval.jsonl", None, 800, "curriculum: interval coverage"),
     ("sft_lookup.jsonl", None, 300, "curriculum: record lookup"),
     ("sft_lookup_v94.jsonl", None, 200, "curriculum: record lookup (balanced)"),
+    ("sft_lookup_v9.jsonl", None, 200, "curriculum: record lookup (many no-record items)"),
     ("sft_reading_v93.jsonl", None, 800, "curriculum: paragraph reading"),
-    ("sft_read_to_train.jsonl", None, 500, "timeline, templated"),
+    ("sft_read_to_train.jsonl", None, 900, "timeline, templated"),
     ("sft_read_to_liar_train.jsonl", None, 400, "lying witness, templated"),
     ("sft_read_to_combo_train.jsonl", None, 500, "combined, templated"),
     ("sft_mliar_v11c.jsonl", None, 500, "one or two liars, templated"),

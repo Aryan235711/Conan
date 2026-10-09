@@ -12,7 +12,7 @@ evaluation, so it takes two sessions.
 ## 1. Build the bundle (on the Mac)
 
 ```bash
-python3 training/make_consolidated.py      # data/kaggle/sft_all.jsonl, 6,000 examples
+python3 training/make_consolidated.py      # data/kaggle/sft_all.jsonl, 6,900 examples
 python3 training/make_kaggle_bundle.py     # data/kaggle/conan_kaggle.zip
 ```
 

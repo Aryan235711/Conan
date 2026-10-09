@@ -34,7 +34,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SMOKE = os.environ.get("SMOKE") == "1"
 MODEL = os.environ.get("MODEL", "Qwen/Qwen2.5-0.5B-Instruct" if SMOKE else "Qwen/Qwen2.5-1.5B-Instruct")
 NAME = os.environ.get("NAME", "smoke" if SMOKE else "qwen1.5b-all")
-STEPS = int(os.environ.get("STEPS", 3 if SMOKE else 750))
+STEPS = int(os.environ.get("STEPS", 3 if SMOKE else 860))
 HOURS = float(os.environ.get("HOURS", 9.5))
 EVAL_N = int(os.environ.get("EVAL_N", 2 if SMOKE else 100))
 STAGE = os.environ.get("STAGE", "all")
