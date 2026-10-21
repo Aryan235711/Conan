@@ -19,6 +19,7 @@ Everything is created private. The private hand-written cases are never uploaded
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -29,6 +30,9 @@ ROOT = Path(__file__).resolve().parent.parent
 WORK = ROOT / "data" / "kaggle" / "push"
 KAGGLE = str(Path(sys.executable).parent / "kaggle")
 DATASET_SLUG = "conan-kaggle"
+WHEELS_SLUG = "conan-wheels"          # Linux wheels of the exact library versions (data/kaggle/wheels)
+ACCEL = os.environ.get("KAGGLE_ACCEL", "")        # empty: use enable_gpu from the metadata
+MODEL_HANDLE = "qwen-lm/qwen2.5/transformers/1.5b-instruct/1"
 STATE = WORK / "state.json"
 
 
@@ -54,6 +58,19 @@ def state() -> dict:
     return json.loads(STATE.read_text()) if STATE.exists() else {"session": 0}
 
 
+def wheels() -> None:
+    folder = WORK / "wheels"
+    shutil.rmtree(folder, ignore_errors=True)
+    shutil.copytree(ROOT / "data" / "kaggle" / "wheels", folder)
+    (folder / "dataset-metadata.json").write_text(json.dumps(
+        {"title": WHEELS_SLUG, "id": f"{user()}/{WHEELS_SLUG}", "licenses": [{"name": "other"}]}))
+    mine = subprocess.run([KAGGLE, "datasets", "list", "--mine"], capture_output=True, text=True).stdout
+    if f"{user()}/{WHEELS_SLUG}" in mine:
+        kaggle("datasets", "version", "-p", str(folder), "-m", "update")
+    else:
+        kaggle("datasets", "create", "-p", str(folder))
+
+
 def dataset() -> None:
     folder = WORK / "dataset"
     shutil.rmtree(folder, ignore_errors=True)
@@ -72,24 +89,37 @@ def dataset() -> None:
 
 RUNNER = '''
 import os, shutil, subprocess, sys, glob
+# Offline by design: libraries come from the conan-wheels dataset and the model from Kaggle's model library.
+os.environ.update({"HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1", "HF_DATASETS_OFFLINE": "1"})
 found = glob.glob("/kaggle/input/**/training/kaggle_run.py", recursive=True)
 if not found:
     for root, dirs, files in os.walk("/kaggle/input"):
         print(root, dirs[:5], files[:5])
     sys.exit("training/kaggle_run.py not found under /kaggle/input")
-src = found[0]
-print("code found at", src, flush=True)
-repo = os.path.dirname(os.path.dirname(src))
+repo = os.path.dirname(os.path.dirname(found[0]))
+wheels = sorted(glob.glob("/kaggle/input/**/*.whl", recursive=True))
+models = [os.path.dirname(c) for c in glob.glob("/kaggle/input/**/config.json", recursive=True) if "1.5b-instruct" in c.lower()]
+print("code:", repo, "| wheels:", len(wheels), "| model:", models[:1], flush=True)
+if not wheels or not models:
+    sys.exit("wheels or model missing from the inputs")
+subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "--no-index", "--no-deps", *wheels])
+subprocess.call([sys.executable, "-m", "pip", "check"])
+import torch
+print("torch", torch.__version__, "| cuda:", torch.cuda.is_available(), flush=True)
+if not torch.cuda.is_available():
+    sys.exit("no GPU in this session (is the account phone-verified and the accelerator set?)")
+os.environ["MODEL"] = models[0]
 shutil.copytree(repo, "/kaggle/working/Conan", dirs_exist_ok=True)
 os.chdir("/kaggle/working/Conan")
-subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "-U", "transformers", "trl", "peft", "datasets", "accelerate"])
-if os.environ.get("SKIP_SMOKE") != "1" and not os.path.exists("/kaggle/working/Conan/runs/sft/qwen1.5b-all"):
+if os.environ.get("SKIP_SMOKE") != "1" and not os.path.exists("runs/sft/qwen1.5b-all"):
     smoke = subprocess.call([sys.executable, "training/kaggle_run.py"], env={**os.environ, "SMOKE": "1"})
     if smoke:
         sys.exit("smoke check failed; see the log above")
     shutil.rmtree("runs/sft/smoke", ignore_errors=True)
     for d in glob.glob("runs/hf_runs_sft_smoke*"):
         shutil.rmtree(d)
+    if os.path.exists("results.md"):
+        os.remove("results.md")
 subprocess.check_call([sys.executable, "training/kaggle_run.py"])
 '''
 
@@ -98,14 +128,16 @@ def push(session: int, previous: str | None) -> None:
     folder = WORK / f"kernel{session}"
     shutil.rmtree(folder, ignore_errors=True)
     folder.mkdir(parents=True)
-    slug = f"conan-1-5b-s{session}"
+    slug = f"conan15b-run-s{session}"   # fresh name: the first notebook was pinned to a CPU-only image
     (folder / "run.py").write_text(RUNNER)
     meta = {"id": f"{user()}/{slug}", "title": slug, "code_file": "run.py", "language": "python",
             "kernel_type": "script", "is_private": True, "enable_gpu": True, "enable_internet": True,
-            "dataset_sources": [f"{user()}/{DATASET_SLUG}"], "kernel_sources": [previous] if previous else [],
-            "competition_sources": []}
+            "dataset_sources": [f"{user()}/{DATASET_SLUG}", f"{user()}/{WHEELS_SLUG}"],
+            "kernel_sources": [previous] if previous else [], "competition_sources": [],
+            "model_sources": [MODEL_HANDLE],
+            "docker_image": "gcr.io/kaggle-gpu-images/python"}     # ask for the GPU image explicitly
     (folder / "kernel-metadata.json").write_text(json.dumps(meta, indent=1))
-    kaggle("kernels", "push", "-p", str(folder), "--accelerator", "NvidiaTeslaT4")
+    kaggle("kernels", "push", "-p", str(folder), *(["--accelerator", ACCEL] if ACCEL else []))
     WORK.mkdir(parents=True, exist_ok=True)
     STATE.write_text(json.dumps({"session": session, "kernel": f"{user()}/{slug}"}))
 
@@ -115,6 +147,8 @@ def main() -> None:
     s = state()
     if cmd == "dataset":
         dataset()
+    elif cmd == "wheels":
+        wheels()
     elif cmd == "run":
         push(1, None)
     elif cmd == "resume":
