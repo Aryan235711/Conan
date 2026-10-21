@@ -120,3 +120,5 @@ data/spotcheck/
 
 # Bundle for GPU runs elsewhere (built by training/make_consolidated.py)
 data/kaggle/
+
+.venv-kaggle/
