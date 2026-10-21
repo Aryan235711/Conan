@@ -33,10 +33,12 @@ STATE = WORK / "state.json"
 
 
 def user() -> str:
-    cfg = Path.home() / ".kaggle" / "kaggle.json"
-    if not cfg.exists():
-        sys.exit("~/.kaggle/kaggle.json not found: create an API token in Kaggle → Settings → API (see the top of this file)")
-    return json.loads(cfg.read_text())["username"]     # the key itself is never read or printed here
+    """The account name, from the Kaggle CLI's own configuration (token files are never read here)."""
+    out = subprocess.run([KAGGLE, "config", "view"], capture_output=True, text=True).stdout
+    for line in out.splitlines():
+        if line.strip().startswith("- username:"):
+            return line.split(":", 1)[1].strip()
+    sys.exit("no Kaggle credentials: put an API token in ~/.kaggle/access_token (Kaggle → Settings → API)")
 
 
 def kaggle(*args: str) -> str:
@@ -60,7 +62,8 @@ def dataset() -> None:
         z.extractall(folder)                           # upload the folder tree, so paths are predictable
     (folder / "dataset-metadata.json").write_text(json.dumps({
         "title": "conan-kaggle", "id": f"{user()}/{DATASET_SLUG}", "licenses": [{"name": "other"}]}))
-    exists = subprocess.run([KAGGLE, "datasets", "status", f"{user()}/{DATASET_SLUG}"], capture_output=True).returncode == 0
+    mine = subprocess.run([KAGGLE, "datasets", "list", "--mine"], capture_output=True, text=True).stdout
+    exists = f"{user()}/{DATASET_SLUG}" in mine
     if exists:
         kaggle("datasets", "version", "-p", str(folder), "-m", "update", "-r", "tar")
     else:
@@ -69,7 +72,13 @@ def dataset() -> None:
 
 RUNNER = '''
 import os, shutil, subprocess, sys, glob
-src = glob.glob("/kaggle/input/conan-kaggle/**/training/kaggle_run.py", recursive=True)[0]
+found = glob.glob("/kaggle/input/**/training/kaggle_run.py", recursive=True)
+if not found:
+    for root, dirs, files in os.walk("/kaggle/input"):
+        print(root, dirs[:5], files[:5])
+    sys.exit("training/kaggle_run.py not found under /kaggle/input")
+src = found[0]
+print("code found at", src, flush=True)
 repo = os.path.dirname(os.path.dirname(src))
 shutil.copytree(repo, "/kaggle/working/Conan", dirs_exist_ok=True)
 os.chdir("/kaggle/working/Conan")
