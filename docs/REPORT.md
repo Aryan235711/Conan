@@ -819,6 +819,46 @@ Achterberg on board the night ferry from 22:50 to 00:30" is read as "ferry from
 reading wording the model has not seen remains the limit of the 0.5B model,
 as in the v9 series.
 
+### Scale: Qwen2.5 1.5B on a free Kaggle GPU
+
+Every new reasoning type was learned within a day, but reading unfamiliar
+wording stayed at about 75-80% for the 0.5B model, and the hand-written spot
+check S-1 kept failing at reading one sentence. So the same recipe was run once
+on Qwen2.5 1.5B: one training run from the base model (no chain of versions) on
+a consolidated set of 6,900 examples covering every family, templated and prose,
+plus the interval, lookup and reading curricula (`training/make_consolidated.py`).
+
+A dry run of that one-stage recipe on the 0.5B model, with a 40% sample, reached
+78-88% on most families but was weak on timeline cases (66%) and on "no record"
+lookups (1 of 18), so both were given more weight in the full set first.
+
+The run was driven from the laptop with the Kaggle CLI (`training/kaggle_push.py`):
+private datasets for the code bundle and for Linux wheels of the exact library
+versions, the base model from Kaggle's model library, no internet needed inside
+the session. Training took 7.2 hours on one T4 (860 steps, fp16, LoRA r = 16;
+loss 0.76 to 0.001), and evaluation fitted into the same 12-hour session.
+
+| Held-out (same cases) | v11e (0.5B, chain) | 1.5B (one run) |
+|---|---|---|
+| prose_test2, fresh, 150 cases | 74% | **93% (87-96)** |
+| &nbsp;&nbsp;timeline / lying witness / combined | 84 / 74 / 64% | 88 / 96 / 94% |
+| Mixed alibis in unseen prose, 100 cases | 63% | **93% (86-97)** |
+| Mixed alibis, templated, 100 cases | 94% | 97% |
+| Combined / timeline / lying witness, 100 each | 97 / 94 / 100% | 99 / 99 / 100% |
+| One or two liars, 100 cases | 97% | 99% |
+| Lookup probe | 94% | **98%** |
+| Spot check S-1 (hand-written, never uploaded) | wrong | **right (reward 0.99)** |
+| Reliability suite | 6 of 12 | 6 of 12 (tier A 4/6, tier B 2/6) |
+
+On held-out prose the paired differences are 36 vs 8 and 33 vs 3 cases (both
+p < 0.001). The larger model removes about 70% of the prose errors and reads the
+sentence that defeated every 0.5B version. Templated families were already near
+the ceiling and gain little. The reliability suite does not move: tier B needs
+reasoning no generator teaches (lividity, timetables, stomach contents), which
+size alone does not supply. Caveat: the two models differ in training recipe as
+well as size (one run against a chain of fifteen); the 0.5B saw more training in
+total, so size is the likely cause of the prose gain.
+
 ## 6. Training pipeline
 
 - **SFT warm-up.** Reasoning traces are written from the solver's facts in a

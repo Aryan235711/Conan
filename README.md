@@ -105,6 +105,13 @@ appeared together). A second v11 family mixes them: v11e reaches **95%** on it
 (63% in unseen prose) with the other families held. The hand-written case
 still fails at reading one sentence, the 0.5B model's remaining limit.
 
+**Scale.** The same recipe, run once on Qwen2.5 1.5B on a free Kaggle T4 (7.2 hours,
+driven from the laptop with `training/kaggle_push.py`), reaches **93%** on fresh
+held-out prose (0.5B: 74%) and 93% on mixed-alibi prose (63%), 97-100% on every
+templated family, and solves the hand-written spot check that every 0.5B version
+failed. The reliability suite stays at 6 of 12: its hardest cases need reasoning
+types no generator teaches yet.
+
 The path to 83.5% came from diagnosis rather than more training:
 
 1. A step-by-step error analysis showed models ruled out the real culprit
