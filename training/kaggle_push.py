@@ -103,6 +103,7 @@ print("code:", repo, "| wheels:", len(wheels), "| model:", models[:1], flush=Tru
 if not wheels or not models:
     sys.exit("wheels or model missing from the inputs")
 subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "--no-index", "--no-deps", *wheels])
+subprocess.call([sys.executable, "-m", "pip", "uninstall", "-y", "-q", "torchao"])  # Kaggle's old torchao breaks peft; unused here
 subprocess.call([sys.executable, "-m", "pip", "check"])
 import torch
 print("torch", torch.__version__, "| cuda:", torch.cuda.is_available(), flush=True)

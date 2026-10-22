@@ -73,11 +73,13 @@ def train() -> bool:
     if (OUT / "adapter_config.json").exists():
         print("training already finished")
         return True
-    sh(sys.executable, "training/sft_train.py", "--model", MODEL, "--data", str(DATA),
+    rc = sh(sys.executable, "training/sft_train.py", "--model", MODEL, "--data", str(DATA),
        "--max-steps", str(STEPS), "--batch-size", "1", "--grad-accum", "8", "--lr", "1.5e-4",
        "--max-length", os.environ.get("MAX_LENGTH", "4200"), "--gradient-checkpointing", "--fp16",
        "--save-steps", "2" if SMOKE else "50", "--resume", "--max-hours", str(HOURS), "--output", str(OUT),
        *(["--limit", "24"] if SMOKE else []))
+    if rc != 0:
+        sys.exit(f"training failed (exit code {rc}); see the traceback above")
     done = (OUT / "adapter_config.json").exists()
     if not done:
         print("\nTraining is not finished. Save this version, then start a new session with this "
