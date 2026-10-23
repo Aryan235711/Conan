@@ -112,6 +112,13 @@ templated family, and solves the hand-written spot check that every 0.5B version
 failed. The reliability suite stays at 6 of 12: its hardest cases need reasoning
 types no generator teaches yet.
 
+**Travel alibis (v12).** A third new reasoning type turns alibis into train
+journeys: timetable lookup among decoys, time arithmetic across midnight, then
+coverage. Continuing the 1.5B on Kaggle takes it from 32% to **97%** (91% in unseen
+prose). Older splits slip by a few cases each (none significant) and the
+hand-written spot check flips to a misread window, so a consolidation run comes
+next.
+
 The path to 83.5% came from diagnosis rather than more training:
 
 1. A step-by-step error analysis showed models ruled out the real culprit

@@ -859,6 +859,42 @@ size alone does not supply. Caveat: the two models differ in training recipe as
 well as size (one run against a chain of fifteen); the 0.5B saw more training in
 total, so size is the likely cause of the prose gain.
 
+### v11 family 3 on the 1.5B: travel alibis (v12)
+
+The third new reasoning type turns an alibi into a journey: a ticket for a
+train, the timetable row that gives its arrival (among decoy rows from the same
+station or at the same time), and travel times between the stations and the
+scene (`detective_engine/travel.py`). Clearing a suspect means a lookup, time
+arithmetic across hours and midnight, and the usual coverage check; the traces
+write the arithmetic out ("22:10 minus 25 minutes: 10 < 25, so borrow an hour:
+70 - 25 = 45, so 21:45"). It was designed from general principles; the private
+reliability cases were not read.
+
+v12 continued the 1.5B adapter on Kaggle (one session, driven from the laptop):
+a paired baseline first, then 262 steps on 2,100 examples (600 templated and 500
+prose travel traces, 1,000 replay rows from the consolidated set), then every
+held-out split.
+
+| Held-out (same cases) | 1.5B before | v12 |
+|---|---|---|
+| Travel alibis, templated, 100 cases | 32% | **97% (92-99)** |
+| Travel alibis, prose (unseen wording and names), 100 cases | 25% | **91% (84-95)** |
+| prose_test2, 150 cases | 93% | 89% (paired 9 vs 14, p = 0.41) |
+| Mixed alibis, prose / templated | 93% / 97% | 90% / 99% |
+| Combined / timeline / lying witness / k liars | 99 / 99 / 100 / 99% | 99 / 99 / 97 / 98% |
+| Lookup probe | 98% | 95% |
+| Spot check S-1 | right | wrong |
+| Reliability suite | 6 of 12 | 6 of 12 (tier A 5/6, tier B 1/6) |
+
+The new skill is learned (paired 65 vs 0 and 68 vs 2). The older splits move by a
+few cases each, none significantly, but all in the same direction, and S-1 flips:
+v12 handles its decoy record, liar and verified alibi correctly, then reads its
+two signs of life as "alive at 21:50, died at 23:30" and builds the wrong window.
+A short consolidation run (as v9.5 was for the 0.5B) is the obvious next step
+before adding another family. Tier B still gets little from the new families, so
+the hand-written cases they target are not yet solved by the generated versions
+of the same reasoning.
+
 ## 6. Training pipeline
 
 - **SFT warm-up.** Reasoning traces are written from the solver's facts in a
