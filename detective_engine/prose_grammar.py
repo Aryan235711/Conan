@@ -289,6 +289,49 @@ def rule_combo(r):
     ])
 
 
+def travel_rule(r):
+    return r.choice([
+        "Travel times below are the fastest possible. Tickets, timetables and records are reliable.",
+        "Every travel time given is the quickest possible, and all tickets and timetables are reliable.",
+        "No one can make any trip faster than the times stated. Ticket scans and timetables are reliable.",
+    ])
+
+
+def ticket(r, s, st, t):
+    return r.choice([
+        f"{s}'s ticket was scanned on the {t} train from {st}.",
+        f"Railway records show {s} boarding the {t} train at {st}.",
+        f"{s} was on the {t} from {st}, according to the ticket scan.",
+        f"The {t} train from {st} carried {s}; the scanned ticket proves it.",
+    ])
+
+
+def timetable(r, st, t, d, a):
+    return r.choice([
+        f"The {t} train from {st} arrives at {d} at {a}.",
+        f"The timetable has the {t} from {st} reaching {d} at {a}.",
+        f"A train leaves {st} at {t} and gets to {d} at {a}.",
+        f"Departing {st} at {t}, the service arrives in {d} at {a}.",
+    ])
+
+
+def travel(r, st, m, room):
+    return r.choice([
+        f"{st} station is {m} minutes from the {room}.",
+        f"It takes {m} minutes to get between {st} station and the {room}.",
+        f"The {room} is {m} minutes away from {st} station by the fastest route.",
+        f"Even by car, the trip from {st} station to the {room} takes {m} minutes.",
+    ])
+
+
+def journey_claim(r, s, st, t):
+    return r.choice([
+        f"{s} says they took the {t} train from {st}, but no ticket or record shows it.",
+        f"According to {s}, they caught the {t} from {st}; no ticket proves it.",
+        f"{s} claims a trip on the {t} train from {st} that no record supports.",
+    ])
+
+
 FILLERS = ["It had been raining since the afternoon.", "The street was quiet that night.",
            "Detectives checked this twice.", "This was confirmed the next morning.",
            "The information came in late on the first day."]
@@ -308,6 +351,8 @@ GRAMMAR: dict[str, Callable] = {
     "testimony": testimony, "point": point, "motive": motive, "witness_alibi": witness_alibi,
     "record": record, "claim": claim, "sighting": sighting, "demeanour": demeanour,
     "rule_liar": rule_liar, "rule_combo": rule_combo,
+    "travel_rule": travel_rule, "ticket": ticket, "timetable": timetable, "travel": travel,
+    "journey_claim": journey_claim,
 }
 
 

@@ -35,7 +35,7 @@ import random
 from pathlib import Path
 from typing import Any
 
-from . import composite, liar, mixed
+from . import composite, liar, mixed, travel
 from . import generator as timeline
 from . import prose_grammar as G
 from .generator import POOLS, death_window, fmt
@@ -226,6 +226,34 @@ BANK: dict[str, dict[str, list[str]]] = {
                   "Detectives know that one, and only one, of the witnesses lied. Every record is reliable."],
         "test": ["One witness is not telling the truth; everyone else is honest, and the records can be trusted."],
     },
+    "travel_rule": {
+        "train": ["Travel times below are the fastest possible. Tickets, timetables and records are reliable.",
+                  "All tickets, timetables and records are reliable, and every travel time given is the fastest possible."],
+        "test": ["Each journey time listed is the quickest way there; the tickets and timetables can be trusted."],
+    },
+    "ticket": {
+        "train": ["{s}'s ticket was scanned on the {t} train from {st}.",
+                  "The ticket barrier at {st} logged {s} boarding the {t} train.",
+                  "{s} travelled on the {t} service from {st}; the ticket scan confirms it."],
+        "test": ["A conductor clipped {s}'s ticket on the {t} departure from {st}."],
+    },
+    "timetable": {
+        "train": ["The {t} train from {st} arrives at {d} at {a}.",
+                  "According to the timetable, the {t} from {st} reaches {d} at {a}.",
+                  "The {t} service out of {st} is due into {d} at {a}."],
+        "test": ["Leaving {st} at {t}, that train pulls into {d} at {a}."],
+    },
+    "travel": {
+        "train": ["{st} station is {m} minutes from the {room}.",
+                  "The fastest route between {st} station and the {room} takes {m} minutes.",
+                  "From the {room} to {st} station is a trip of {m} minutes."],
+        "test": ["Getting from {st} station to the {room} needs {m} minutes at best."],
+    },
+    "journey_claim": {
+        "train": ["{s} says they took the {t} train from {st}, but no ticket or record shows it.",
+                  "{s} claims to have caught the {t} from {st}; nothing confirms it."],
+        "test": ["By {s}'s own story the {t} out of {st} was the train taken, yet there is no ticket."],
+    },
     "rule_combo": {
         "train": ["Records are reliable. Exactly one witness below is lying; the others tell the truth.",
                   "Every record is reliable, and exactly one of the witnesses who vouch for someone is lying."],
@@ -292,7 +320,7 @@ def _fact(kind: str, **data: Any) -> dict:
     """Source-format fact: times as HH:MM strings, as the builder expects."""
     out = {}
     for k, v in data.items():
-        out[k] = fmt(v) if k in ("time", "start", "end", "discovery") else v
+        out[k] = fmt(v) if k in ("time", "start", "end", "discovery", "dep", "arr") else v
     return {"kind": kind, "data": out}
 
 
@@ -551,10 +579,48 @@ def liar_source(world: dict, W: Writer) -> dict:
             "hidden_truth": f"{world['liar']} lied."}
 
 
+def travel_source(world: dict, W: Writer) -> dict:
+    rng, room, pool = W.rng, world["place"], POOLS[world["pool"]]
+    head = [_para(W.say("travel_rule"), [])] + _physical(world, W)
+    rest = _access(world, W)
+    rows, walks = [], []
+    for f in world["facts"]:
+        d = f.data
+        if f.kind == "ticket":
+            rest.append(_para(W.say("ticket", s=d["name"], st=d["station"], t=fmt(d["dep"])),
+                              [_fact("ticket", name=d["name"], station=d["station"], dep=d["dep"])]))
+        elif f.kind == "timetable":
+            rows.append(_para(W.say("timetable", st=d["station"], t=fmt(d["dep"]), d=d["dest"], a=fmt(d["arr"])),
+                              [_fact("timetable", station=d["station"], dep=d["dep"], dest=d["dest"], arr=d["arr"])]))
+        elif f.kind == "travel":
+            walks.append(_para(W.say("travel", st=d["station"], m=d["minutes"], room=room),
+                               [_fact("travel", station=d["station"], minutes=d["minutes"])]))
+        elif f.kind == "alibi":
+            rest.append(_para(W.say("alibi", s=d["name"], p=rng.choice(pool["alibi_place"]),
+                                    a=fmt(d["start"]), b=fmt(d["end"])),
+                              [_fact("alibi", name=d["name"], start=d["start"], end=d["end"])]))
+        elif f.kind == "testimony":
+            text = (W.say("journey_claim", s=d["name"], st=d["via"], t=fmt(d["at"])) if "via" in d
+                    else W.say("testimony", s=d["name"], w="home"))
+            rest.append(_para(text, [_fact("testimony", name=d["name"])]))
+    rng.shuffle(rows)
+    rng.shuffle(walks)
+    rest += _merge_pairs(rng, rows, *W.merge(0.4)) + _merge_pairs(rng, walks, *W.merge(0.4))
+    rest += _motives(world, W) + _salient(world, W)
+    scen = [{"text": f"{s}, the {world['roles'][s]}, killed {world['victim']}.", "label": s} for s in world["suspects"]]
+    scen.append({"text": f"{world['victim']}'s death was an accident.", "label": "accident"})
+    return {"family": "travel", "evidence": [head[0]] + _order(rng, head[1:], rest), "scenarios": scen,
+            "intended": world["culprit"], "title": f"The journey from the {room}",
+            "summary": (f"{world['victim']} was found dead in the {room}. {len(world['suspects'])} people are under "
+                        "suspicion, and some say they were travelling. Work out who could have done it and when."),
+            "hidden_truth": f"{world['culprit']} killed {world['victim']}."}
+
+
 FAMILIES = {
     "timeline": (timeline.simulate, timeline_source),
     "composite": (composite.simulate, composite_source),
     "mixed": (mixed.simulate, composite_source),
+    "travel": (travel.simulate, travel_source),
     "liar": (liar.simulate, liar_source),
 }
 
@@ -597,7 +663,7 @@ def make_case(family: str, rng: random.Random, level: int, pool: str, bank: str,
     case["category"] = f"generated-prose-{family}"
     case["solution"] = {"unlock_key": "GENERATED"}
     case["generator"].update({"version": 2, "level": level, "prose": True, "bank": bank})
-    if family == "mixed":                    # composite solver underneath; keep the family name for reports
+    if family in ("mixed",):                 # composite solver underneath; keep the family name for reports
         case["generator"]["source_family"] = family
     return case
 
@@ -649,6 +715,9 @@ SPLITS = {
     # v11 family 2 in prose: training phrasing and names, and a held-out test.
     "prose_mixed_train": [("mixed", 1000, 93, (2, 3), "A", "wide3", "PMR")],
     "prose_mixed_test": [("mixed", 100, 94, (2, 3), "B", "test", "PMT")],
+    # v11 family 3 in prose.
+    "prose_travel_train": [("travel", 800, 97, (2, 3), "A", "wide3", "PJR")],
+    "prose_travel_test": [("travel", 100, 98, (2, 3), "B", "test", "PJT")],
     "prose_test": [("timeline", 50, 24, (2, 3), "B", "test", "PXT"),
                    ("liar", 50, 25, (2, 3), "B", "test", "PXL"),
                    ("composite", 50, 26, (2, 3), "B", "test", "PXC")],
@@ -673,7 +742,8 @@ def main() -> None:
             cases += generate(max(1, int(count * args.scale)), seed, family, levels, pool, bank, prefix)
         # interleave families so --limit takes a balanced sample
         by_fam = [[c for c in cases if c["generator"]["family"] == f] for f in ("timeline", "liar", "composite")]
-        mixed = [c for group in zip(*by_fam) for c in group] if len({len(g) for g in by_fam}) == 1 else cases
+        full = all(by_fam) and len({len(g) for g in by_fam}) == 1        # only when all three families are present
+        mixed = [c for group in zip(*by_fam) for c in group] if full else cases
         with open(out / f"{name}.jsonl", "w", encoding="utf-8") as f:
             for c in mixed:
                 f.write(json.dumps(c, ensure_ascii=False) + "\n")

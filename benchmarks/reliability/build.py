@@ -38,7 +38,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 sys.path.insert(0, str(ROOT))
 
-from detective_engine import composite, liar  # noqa: E402
+from detective_engine import composite, liar, travel  # noqa: E402
 from detective_engine.engine.case_validator import CaseQualityValidator  # noqa: E402
 from detective_engine.engine.models import CaseDefinition  # noqa: E402
 from detective_engine.generator import Fact, death_window, fmt  # noqa: E402
@@ -47,7 +47,7 @@ from detective_engine.generator import solve as timeline_solve  # noqa: E402
 SRC = HERE / "source"
 OUT = HERE / "cases.jsonl"
 
-TIME_FIELDS = ("time", "start", "end", "discovery")
+TIME_FIELDS = ("time", "start", "end", "discovery", "dep", "arr")
 QUESTIONS = {
     "timeline": ["What window of time does the physical evidence allow for the death?",
                  "Who could have entered, and does that rule matter here?",
@@ -93,8 +93,11 @@ def _tokens(fact: dict) -> list[str]:
     for k in TIME_FIELDS:
         if isinstance(d.get(k), str):
             toks.append(d[k])
-    if isinstance(d.get("place"), str):
-        toks.append(d["place"])
+    for k in ("place", "station", "dest"):
+        if isinstance(d.get(k), str):
+            toks.append(d[k])
+    if isinstance(d.get("minutes"), int):
+        toks.append(f"{d['minutes']} minutes")
     for p, t, place, _ in d.get("atoms", []):
         toks += [p, t, place]
     if "temp" in d:
@@ -140,6 +143,8 @@ def build_solver_case(src: dict) -> dict:
             return composite.solve(fs, suspects, src["witnesses"], with_accident)
         if family == "liar":
             return liar.solve(fs, suspects, src["n_places"])
+        if family == "travel":
+            return travel.solve(fs, suspects, with_accident)
         raise BuildError(f"unknown family {family}")
 
     all_idx = list(range(len(items)))
@@ -171,7 +176,7 @@ def build_solver_case(src: dict) -> dict:
         for f in facts_from([i]):
             gen_facts.append({**f.to_dict(), "para": i + 1})
     gen = {"family": family, "facts": gen_facts}
-    if family in ("timeline", "composite"):
+    if family in ("timeline", "composite", "travel"):
         lo, hi = death_window(facts_from(all_idx))
         answer_key["time_window"] = {"label": "time of death", "earliest": fmt(lo), "latest": fmt(hi)}
     if family == "composite":

@@ -108,6 +108,14 @@ def _read_fact(f: Fact, text: str = "") -> str:
         if len(atoms) == 1:
             return f"{d['speaker']} says they were at {atoms[0][2]} at {fmt(atoms[0][1])}"
         return f"{d['speaker']} says they and {atoms[1][0]} were at {atoms[0][2]} at {fmt(atoms[0][1])}"
+    if k == "travel_rule":
+        return "the rule: travel times are the fastest possible; tickets, timetables and records are reliable"
+    if k == "ticket":
+        return f"{d['name']}: ticket for the {fmt(d['dep'])} train from {d['station']}"
+    if k == "timetable":
+        return f"timetable: the {fmt(d['dep'])} from {d['station']} arrives at {d['dest']} at {fmt(d['arr'])}"
+    if k == "travel":
+        return f"{d['station']} station is {d['minutes']} minutes from the scene"
     if k == "rule":
         n = d.get("k", 1)
         if n == 1:
@@ -240,6 +248,118 @@ def write_liar_trace(raw: dict) -> str:
         lines.append(f"{eid[i]}: describes behaviour or background, not where anyone was, so it proves nothing.")
     answer = agent_solver(case, "", raw)
     lines.append(f"\nConclusion: {liar} ({sid[liar]}) is lying.")
+    lines.append(_answer_block(answer))
+    return "\n".join(lines)
+
+
+def _clock_minutes(t: int) -> tuple[int, int]:
+    total = (t + 12 * 60) % (24 * 60)
+    return total // 60, total % 60
+
+
+def _minus(t: int, m: int) -> str:
+    """Written-out subtraction of m minutes from a clock time."""
+    h, mm = _clock_minutes(t)
+    if m >= 60:
+        first = t - 60
+        return f"{fmt(t)} minus {m} minutes: first minus 1 hour is {fmt(first)}; " + _minus(first, m - 60)[len(fmt(first)) + 1:] \
+            if m > 60 else f"{fmt(t)} minus 60 minutes is one hour earlier, {fmt(t - 60)}."
+    if mm >= m:
+        return f"{fmt(t)} minus {m} minutes: {mm:02d} - {m} = {mm - m:02d}, so {fmt(t - m)}."
+    return f"{fmt(t)} minus {m} minutes: {mm:02d} < {m}, so borrow an hour: {mm + 60} - {m} = {mm + 60 - m:02d}, so {fmt(t - m)}."
+
+
+def _plus(t: int, m: int) -> str:
+    """Written-out addition of m minutes to a clock time (past midnight too)."""
+    h, mm = _clock_minutes(t)
+    s = mm + m
+    if s < 60:
+        return f"{fmt(t)} plus {m} minutes: {mm:02d} + {m} = {s:02d}, so {fmt(t + m)}."
+    hours, rest = divmod(s, 60)
+    return (f"{fmt(t)} plus {m} minutes: {mm:02d} + {m} = {s}, which is {hours} hour{'s' if hours > 1 else ''} "
+            f"{rest:02d}, so {fmt(t + m)}.")
+
+
+def write_travel_trace(raw: dict) -> str:
+    """Trace for the travel family: window, access, then each ticket turned into the span its holder was away."""
+    case = CaseDefinition.from_dict(raw)
+    facts, eid = _fact_ids(raw)
+    label_of = {}
+    for i, s in enumerate(case.scenarios, 1):
+        label_of["accident" if s.endswith("was an accident.") else s.split(",")[0].strip()] = f"S{i}"
+    lo, hi = death_window(facts)
+    by = lambda k: [f for f in facts if f.kind == k]  # noqa: E731
+    lines = (_read_pass(raw) if READ else []) + ["Step 1 - Time of death."]
+    for f in by("body_temp"):
+        drop = BODY_TEMP - f.data["temp"]; hours = drop / COOLING_PER_HOUR
+        est = round(f.data["discovery"] - hours * 60)
+        lines.append(f"{eid[id(f)]}: a drop of {drop:.1f}°C is about {hours:.1f} hours, so death was around {fmt(est)}, "
+                     f"within an hour: {fmt(est - ESTIMATE_TOLERANCE)} to {fmt(est + ESTIMATE_TOLERANCE)}.")
+    lines += _alive_lines(by("last_alive"), eid)
+    lines.append(f"So the death window is {fmt(lo)} to {fmt(hi)}.")
+    lines.append(_midnight_note(lo, hi))
+    for f in by("homicide"):
+        lines.append(f"{eid[id(f)]} rules out an accident ({label_of['accident']}).")
+
+    lines.append("\nStep 2 - Access.")
+    remaining = sorted(((s, n) for n, s in label_of.items() if n != "accident"), key=lambda x: int(x[0][1:]))
+    lines.append(_still(remaining, "Suspects"))
+    kh = by("keyholders")[0]
+    holders = set(kh.data["names"])
+    lines.append(f"{eid[id(by('no_forced_entry')[0])]}: no forced entry, so the killer used a key. {eid[id(kh)]} lists the key holders.")
+    for name, sid in label_of.items():
+        if name != "accident" and name not in holders:
+            lines.append(f"{name} ({sid}) has no key and is ruled out.")
+    remaining = [(s, n) for s, n in remaining if n in holders]
+    lines.append(_still(remaining))
+
+    lines.append(f"\nStep 3 - Where each key holder could not have been, against the window {fmt(lo)} to {fmt(hi)}.")
+    rows: dict[str, list] = {}
+    for f in by("timetable"):
+        rows.setdefault(f.data["station"], []).append(f)
+    walk = {f.data["station"]: f for f in by("travel")}
+    cleared: set[str] = set()
+
+    def check(name: str, a: int, b: int) -> None:
+        lines.extend(explain_coverage(a, b, lo, hi, who=f"{name}'s span"))
+        if a <= lo and b >= hi:
+            cleared.add(name)
+            lines.append(f"So {name} ({label_of[name]}) is ruled out.")
+        else:
+            lines.append(f"So this does not clear {name}.")
+
+    for f in facts:
+        if f.kind == "alibi" and f.data["name"] in holders:
+            d = f.data
+            lines.append(f"{eid[id(f)]}: {d['name']} is verified from {fmt(d['start'])} to {fmt(d['end'])}.")
+            check(d["name"], d["start"], d["end"])
+        elif f.kind == "ticket" and f.data["name"] in holders:
+            d = f.data
+            lines.append(f"{eid[id(f)]}: {d['name']} was on the {fmt(d['dep'])} train from {d['station']}.")
+            mine = sorted(rows.get(d["station"], []), key=lambda r: r.data["dep"])
+            lines.append(f"Timetable rows from {d['station']}: " + "; ".join(
+                f"{eid[id(r)]} {fmt(r.data['dep'])} to {r.data['dest']}, arriving {fmt(r.data['arr'])}" for r in mine) + ".")
+            row = next(r for r in mine if r.data["dep"] == d["dep"])
+            dest, arr = row.data["dest"], row.data["arr"]
+            lines.append(f"The {fmt(d['dep'])} is {eid[id(row)]}: it arrives at {dest} at {fmt(arr)}.")
+            w1, w2 = walk[d["station"]], walk[dest]
+            a, b = d["dep"] - w1.data["minutes"], arr + w2.data["minutes"]
+            lines.append(f"Leaving: {d['station']} is {w1.data['minutes']} minutes from the scene ({eid[id(w1)]}). "
+                         + _minus(d["dep"], w1.data["minutes"]))
+            lines.append(f"Returning: {dest} is {w2.data['minutes']} minutes from the scene ({eid[id(w2)]}). "
+                         + _plus(arr, w2.data["minutes"]))
+            lines.append(f"So {d['name']} could not have been at the scene from {fmt(a)} to {fmt(b)}.")
+            check(d["name"], a, b)
+        elif f.kind == "testimony" and f.data["name"] in holders:
+            lines.append(f"{eid[id(f)]}: {f.data['name']}'s own account, with no ticket or record, so it does not clear them.")
+    remaining = [(s, n) for s, n in remaining if n not in cleared]
+    lines.append(_still(remaining))
+
+    lines.append("\nStep 4 - Red herrings: " + ", ".join(raw["answer_key"]["red_herrings"])
+                 + " (motives of people already excluded, or noise with an innocent explanation).")
+    answer = agent_solver(case, "", raw)
+    culprit = remaining[0][1]
+    lines.append(f"\nConclusion: only {answer['most_likely']} {culprit} is left, so {culprit} ({answer['most_likely']}) is the culprit.")
     lines.append(_answer_block(answer))
     return "\n".join(lines)
 
@@ -459,6 +579,8 @@ def write_trace(raw: dict) -> str:
         return write_liar_trace(raw)
     if raw["generator"].get("family") == "multi_liar":
         return write_multi_liar_trace(raw)
+    if raw["generator"].get("family") == "travel":
+        return write_travel_trace(raw)
     case = CaseDefinition.from_dict(raw)
     facts, eid = _fact_ids(raw)
     label_of = {}
