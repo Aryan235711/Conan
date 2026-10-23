@@ -39,8 +39,12 @@ HOURS = float(os.environ.get("HOURS", 9.5))
 EVAL_N = int(os.environ.get("EVAL_N", 2 if SMOKE else 100))
 STAGE = os.environ.get("STAGE", "all")
 OUT = ROOT / "runs" / "sft" / NAME
-DATA = ROOT / "data" / "kaggle" / "sft_all.jsonl"
-SPLITS = ["mixed_test", "combo_test", "test_ood", "liar_test", "mliar_test", "prose_test2", "prose_mixed_test",
+DATA = ROOT / os.environ.get("DATA", "data/kaggle/sft_all.jsonl")
+INIT = os.environ.get("INIT_ADAPTER")              # continue an earlier adapter (e.g. runs/sft/qwen1.5b-all)
+LR = os.environ.get("LR", "1.5e-4")
+BASELINE = os.environ.get("BASELINE_SPLITS", "")  # evaluate INIT on these before training, for a paired baseline
+SPLITS = ["travel_test", "prose_travel_test", "mixed_test", "combo_test", "test_ood", "liar_test", "mliar_test",
+          "prose_test2", "prose_mixed_test",
           "spotcheck", "reliability"]          # the last two only if the private bundle was added
 START = time.time()
 
@@ -74,7 +78,8 @@ def train() -> bool:
         print("training already finished")
         return True
     rc = sh(sys.executable, "training/sft_train.py", "--model", MODEL, "--data", str(DATA),
-       "--max-steps", str(STEPS), "--batch-size", "1", "--grad-accum", "8", "--lr", "1.5e-4",
+       "--max-steps", str(STEPS), "--batch-size", "1", "--grad-accum", "8", "--lr", LR,
+       *(["--init-adapter", INIT] if INIT else []),
        "--max-length", os.environ.get("MAX_LENGTH", "4200"), "--gradient-checkpointing", "--fp16",
        "--save-steps", "2" if SMOKE else "50", "--resume", "--max-hours", str(HOURS), "--output", str(OUT),
        *(["--limit", "24"] if SMOKE else []))
@@ -87,9 +92,19 @@ def train() -> bool:
     return done
 
 
-def evaluate() -> None:
-    agent = f"hf:runs/sft/{NAME}"
-    for s in SPLITS:
+def fix_adapter_bases() -> None:
+    """Point every adapter at the base model available in this session (the Mac copy names the Hub id)."""
+    import json
+    for cfg in (ROOT / "runs" / "sft").glob("*/adapter_config.json"):
+        c = json.loads(cfg.read_text())
+        if not Path(c.get("base_model_name_or_path", "")).exists():
+            c["base_model_name_or_path"] = MODEL
+            cfg.write_text(json.dumps(c, indent=2))
+
+
+def evaluate(name: str = NAME, splits: list[str] | None = None) -> None:
+    agent = f"hf:runs/sft/{name}"
+    for s in splits or SPLITS:
         if not split_file(s).exists():
             print(f"skip {s}: file not in this bundle")
             continue
@@ -99,7 +114,7 @@ def evaluate() -> None:
         n = 150 if s == "prose_test2" and not SMOKE else EVAL_N
         sh(sys.executable, "-m", "detective_engine.evaluate", "--agent", agent, "--splits", s, "--limit", str(n),
            "--max-new-tokens", "64" if SMOKE else ("2560" if s == "mliar_test" else "3072"), "--batch-size", "8")
-    if not SMOKE:
+    if not SMOKE and splits is None:
         sh(sys.executable, "benchmarks/lookup_probe.py", "--agent", agent)
 
 
@@ -122,6 +137,9 @@ def main() -> None:
     os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
     os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0")     # Kaggle offers two T4s; one process uses one
     restore()
+    fix_adapter_bases()
+    if BASELINE and INIT and not SMOKE:
+        evaluate(Path(INIT).name, [s.strip() for s in BASELINE.split(",") if s.strip()])
     trained = train() if STAGE in ("train", "all") else (OUT / "adapter_config.json").exists()
     if trained and STAGE in ("eval", "all"):
         evaluate()

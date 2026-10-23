@@ -40,6 +40,8 @@ def main() -> None:
                     help="recompute activations instead of storing them; needed for long examples on a 16 GB Mac")
     ap.add_argument("--save-steps", type=int, default=None, help="checkpoint interval (default: half the run)")
     ap.add_argument("--resume", action="store_true", help="resume from the latest checkpoint in --output")
+    ap.add_argument("--init-adapter", default=None,
+                    help="continue training this LoRA adapter (on --model) instead of starting a new one")
     ap.add_argument("--fp16", action="store_true",
                     help="16-bit mixed precision instead of bf16, for GPUs without bf16 such as the T4")
     ap.add_argument("--max-hours", type=float, default=None,
@@ -102,6 +104,10 @@ def main() -> None:
                     control.should_save = True
                     control.should_training_stop = True
         callbacks.append(_TimeLimit())
+    if args.init_adapter:
+        from peft import PeftModel
+        model = PeftModel.from_pretrained(model, args.init_adapter, is_trainable=True)
+        peft_config = None                       # the loaded adapter is trained further
     trainer = SFTTrainer(model=model, args=config, train_dataset=ds, peft_config=peft_config, callbacks=callbacks)
     last = None
     if args.resume:

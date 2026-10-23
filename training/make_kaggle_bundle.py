@@ -15,7 +15,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "data" / "kaggle"
-EVAL = ["mixed_test", "combo_test", "test_ood", "liar_test", "mliar_test", "prose_test2", "prose_mixed_test"]
+EVAL = ["travel_test", "prose_travel_test", "mixed_test", "combo_test", "test_ood", "liar_test", "mliar_test",
+        "prose_test2", "prose_mixed_test"]
+OPTIONAL = ["data/kaggle/sft_v12.jsonl"]          # continuation sets, if built
+ADAPTERS = ["runs/sft/qwen1.5b-all"]              # earlier adapters to continue from, if present
 PRIVATE = ["benchmarks/reliability/cases.jsonl", "data/generated/spotcheck.jsonl"]
 
 
@@ -27,6 +30,9 @@ def main() -> None:
     files += [ROOT / "benchmarks" / "lookup_probe.py", ROOT / "benchmarks" / "interval_probe.py",
               OUT / "sft_all.jsonl", ROOT / "docs" / "KAGGLE.md"]
     files += [ROOT / "data" / "generated" / f"{s}.jsonl" for s in EVAL]
+    files += [ROOT / p for p in OPTIONAL if (ROOT / p).exists()]
+    for a in ADAPTERS:
+        files += [f for f in (ROOT / a).glob("*") if f.is_file() and f.name != "training_args.bin"]
     missing = [f for f in files if not f.exists()]
     if missing:
         raise SystemExit(f"missing: {[str(m.relative_to(ROOT)) for m in missing]}")

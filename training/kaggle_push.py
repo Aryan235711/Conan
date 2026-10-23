@@ -91,6 +91,8 @@ RUNNER = '''
 import os, shutil, subprocess, sys, glob
 # Offline by design: libraries come from the conan-wheels dataset and the model from Kaggle's model library.
 os.environ.update({"HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1", "HF_DATASETS_OFFLINE": "1"})
+import json
+os.environ.update(json.loads('__RUN_ENV__'))      # settings for training/kaggle_run.py, filled in at push time
 found = glob.glob("/kaggle/input/**/training/kaggle_run.py", recursive=True)
 if not found:
     for root, dirs, files in os.walk("/kaggle/input"):
@@ -112,8 +114,9 @@ if not torch.cuda.is_available():
 os.environ["MODEL"] = models[0]
 shutil.copytree(repo, "/kaggle/working/Conan", dirs_exist_ok=True)
 os.chdir("/kaggle/working/Conan")
-if os.environ.get("SKIP_SMOKE") != "1" and not os.path.exists("runs/sft/qwen1.5b-all"):
-    smoke = subprocess.call([sys.executable, "training/kaggle_run.py"], env={**os.environ, "SMOKE": "1"})
+if os.environ.get("SKIP_SMOKE") != "1" and not os.path.exists("runs/sft/" + os.environ.get("NAME", "qwen1.5b-all")):
+    smoke = subprocess.call([sys.executable, "training/kaggle_run.py"],
+                            env={**os.environ, "SMOKE": "1", "NAME": "smoke", "STEPS": "3", "BASELINE_SPLITS": ""})
     if smoke:
         sys.exit("smoke check failed; see the log above")
     shutil.rmtree("runs/sft/smoke", ignore_errors=True)
@@ -129,8 +132,9 @@ def push(session: int, previous: str | None) -> None:
     folder = WORK / f"kernel{session}"
     shutil.rmtree(folder, ignore_errors=True)
     folder.mkdir(parents=True)
-    slug = f"conan15b-run-s{session}"   # fresh name: the first notebook was pinned to a CPU-only image
-    (folder / "run.py").write_text(RUNNER)
+    slug = f"{os.environ.get('KAGGLE_NAME', 'conan15b-run')}-s{session}"   # fresh name: the first notebook was pinned to a CPU-only image
+    env = {k[4:]: v for k, v in os.environ.items() if k.startswith("RUN_")}   # RUN_NAME=... -> NAME=...
+    (folder / "run.py").write_text(RUNNER.replace("__RUN_ENV__", json.dumps(env)))
     meta = {"id": f"{user()}/{slug}", "title": slug, "code_file": "run.py", "language": "python",
             "kernel_type": "script", "is_private": True, "enable_gpu": True, "enable_internet": True,
             "dataset_sources": [f"{user()}/{DATASET_SLUG}", f"{user()}/{WHEELS_SLUG}"],
@@ -140,7 +144,7 @@ def push(session: int, previous: str | None) -> None:
     (folder / "kernel-metadata.json").write_text(json.dumps(meta, indent=1))
     kaggle("kernels", "push", "-p", str(folder), *(["--accelerator", ACCEL] if ACCEL else []))
     WORK.mkdir(parents=True, exist_ok=True)
-    STATE.write_text(json.dumps({"session": session, "kernel": f"{user()}/{slug}"}))
+    STATE.write_text(json.dumps({"session": session, "kernel": f"{user()}/{slug}", "env": env}))
 
 
 def main() -> None:
