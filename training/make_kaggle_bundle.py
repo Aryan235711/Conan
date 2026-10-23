@@ -17,8 +17,8 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "data" / "kaggle"
 EVAL = ["travel_test", "prose_travel_test", "mixed_test", "combo_test", "test_ood", "liar_test", "mliar_test",
         "prose_test2", "prose_mixed_test"]
-OPTIONAL = ["data/kaggle/sft_v12.jsonl"]          # continuation sets, if built
-ADAPTERS = ["runs/sft/qwen1.5b-all"]              # earlier adapters to continue from, if present
+OPTIONAL = ["data/kaggle/sft_v12.jsonl", "data/kaggle/sft_v13.jsonl"]          # continuation sets, if built
+ADAPTERS = ["runs/sft/qwen1.5b-all", "runs/sft/qwen1.5b-v12"]              # earlier adapters to continue from, if present
 PRIVATE = ["benchmarks/reliability/cases.jsonl", "data/generated/spotcheck.jsonl"]
 
 
