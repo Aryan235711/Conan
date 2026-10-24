@@ -407,6 +407,9 @@ SPLITS = {
     # v11 family 3: travel alibis (tickets, timetables, travel times).
     "travel_train": (1500, 95, (2, 3), "A", "travel"),
     "travel_test": (200, 96, (2, 3), "A", "travel"),
+    # v11 family 4: physical evidence (stomach contents, lividity).
+    "physical_train": (1500, 111, (2, 3), "A", "physical"),
+    "physical_test": (200, 112, (2, 3), "A", "physical"),
 }
 
 
@@ -417,14 +420,14 @@ def main() -> None:
     args = ap.parse_args()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    from . import composite, liar, mixed, multi_liar, travel
+    from . import composite, liar, mixed, multi_liar, physical, travel
     prefixes = {"liar_test": "LT", "liar_train": "LR", "combo_train": "CR", "combo_test": "CT",
                 "mliar_train": "MR", "mliar_test": "MT", "mixed_train": "XR", "mixed_test": "XT",
-                "travel_train": "JR", "travel_test": "JT"}
+                "travel_train": "JR", "travel_test": "JT", "physical_train": "FR", "physical_test": "FT"}
     for name, (count, seed, levels, pool, family) in SPLITS.items():
         gen = {"liar": liar.generate, "composite": composite.generate,
                "multi_liar": multi_liar.generate, "mixed": mixed.generate,
-               "travel": travel.generate}.get(family, generate)
+               "travel": travel.generate, "physical": physical.generate}.get(family, generate)
         prefix = prefixes.get(name, name[:2].upper())
         cases = gen(max(1, int(count * args.scale)), seed, levels, pool, prefix=prefix)
         with open(out / f"{name}.jsonl", "w", encoding="utf-8") as f:

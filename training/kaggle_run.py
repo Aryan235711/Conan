@@ -43,7 +43,7 @@ DATA = ROOT / os.environ.get("DATA", "data/kaggle/sft_all.jsonl")
 INIT = os.environ.get("INIT_ADAPTER")              # continue an earlier adapter (e.g. runs/sft/qwen1.5b-all)
 LR = os.environ.get("LR", "1.5e-4")
 BASELINE = os.environ.get("BASELINE_SPLITS", "")  # evaluate INIT on these before training, for a paired baseline
-SPLITS = ["travel_test", "prose_travel_test", "mixed_test", "combo_test", "test_ood", "liar_test", "mliar_test",
+SPLITS = ["physical_test", "prose_physical_test", "travel_test", "prose_travel_test", "mixed_test", "combo_test", "test_ood", "liar_test", "mliar_test",
           "prose_test2", "prose_mixed_test",
           "spotcheck", "reliability"]          # the last two only if the private bundle was added
 START = time.time()

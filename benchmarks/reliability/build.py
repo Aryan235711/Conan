@@ -38,7 +38,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 sys.path.insert(0, str(ROOT))
 
-from detective_engine import composite, liar, travel  # noqa: E402
+from detective_engine import composite, liar, physical, travel  # noqa: E402
 from detective_engine.engine.case_validator import CaseQualityValidator  # noqa: E402
 from detective_engine.engine.models import CaseDefinition  # noqa: E402
 from detective_engine.generator import Fact, death_window, fmt  # noqa: E402
@@ -93,7 +93,7 @@ def _tokens(fact: dict) -> list[str]:
     for k in TIME_FIELDS:
         if isinstance(d.get(k), str):
             toks.append(d[k])
-    for k in ("place", "station", "dest"):
+    for k in ("place", "station", "dest", "state"):
         if isinstance(d.get(k), str):
             toks.append(d[k])
     if isinstance(d.get("minutes"), int):
@@ -145,6 +145,8 @@ def build_solver_case(src: dict) -> dict:
             return liar.solve(fs, suspects, src["n_places"])
         if family == "travel":
             return travel.solve(fs, suspects, with_accident)
+        if family == "physical":
+            return physical.solve(fs, suspects, with_accident)
         raise BuildError(f"unknown family {family}")
 
     all_idx = list(range(len(items)))
@@ -178,6 +180,9 @@ def build_solver_case(src: dict) -> dict:
     gen = {"family": family, "facts": gen_facts}
     if family in ("timeline", "composite", "travel"):
         lo, hi = death_window(facts_from(all_idx))
+        answer_key["time_window"] = {"label": "time of death", "earliest": fmt(lo), "latest": fmt(hi)}
+    if family == "physical":
+        lo, hi = physical.window(facts_from(all_idx))
         answer_key["time_window"] = {"label": "time of death", "earliest": fmt(lo), "latest": fmt(hi)}
     if family == "composite":
         gen["witnesses"] = src["witnesses"]

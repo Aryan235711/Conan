@@ -108,6 +108,16 @@ def _read_fact(f: Fact, text: str = "") -> str:
         if len(atoms) == 1:
             return f"{d['speaker']} says they were at {atoms[0][2]} at {fmt(atoms[0][1])}"
         return f"{d['speaker']} says they and {atoms[1][0]} were at {atoms[0][2]} at {fmt(atoms[0][1])}"
+    if k == "physical_rule":
+        return ("the rule: stomach undigested under 1 hour after the meal, partly digested 1 to 3 hours, empty "
+                "4 hours or more; lividity not matching how the body lay means it was moved")
+    if k == "meal":
+        return f"victim's last meal at {fmt(d['time'])}"
+    if k == "stomach":
+        return f"stomach contents {d['state']}"
+    if k == "lividity":
+        return "lividity does not match how the body lay: moved after death" if d["moved"] else \
+            "lividity matches how the body lay: not moved"
     if k == "travel_rule":
         return "the rule: travel times are the fastest possible; tickets, timetables and records are reliable"
     if k == "ticket":
@@ -364,6 +374,90 @@ def write_travel_trace(raw: dict) -> str:
     return "\n".join(lines)
 
 
+def write_physical_trace(raw: dict) -> str:
+    """Trace for the physical-evidence family: cooling window narrowed by the stomach, then whether the body
+    was moved (and so whether the room's keys matter), then alibis."""
+    from detective_engine.physical import STOMACH, window as phys_window
+    case = CaseDefinition.from_dict(raw)
+    facts, eid = _fact_ids(raw)
+    label_of = {}
+    for i, s in enumerate(case.scenarios, 1):
+        label_of["accident" if s.endswith("was an accident.") else s.split(",")[0].strip()] = f"S{i}"
+    by = lambda k: [f for f in facts if f.kind == k]  # noqa: E731
+    lo0, hi0 = death_window(facts)
+    lo, hi = phys_window(facts)
+    lines = (_read_pass(raw) if READ else []) + ["Step 1 - Time of death."]
+    for f in by("body_temp"):
+        drop = BODY_TEMP - f.data["temp"]; hours = drop / COOLING_PER_HOUR
+        est = round(f.data["discovery"] - hours * 60)
+        lines.append(f"{eid[id(f)]}: a drop of {drop:.1f}°C is about {hours:.1f} hours, so death was around {fmt(est)}, "
+                     f"within an hour: {fmt(est - ESTIMATE_TOLERANCE)} to {fmt(est + ESTIMATE_TOLERANCE)}.")
+    lines += _alive_lines(by("last_alive"), eid)
+    lines.append(f"From cooling and the last sign of life, the window is {fmt(lo0)} to {fmt(hi0)}.")
+    if by("meal") and by("stomach"):
+        meal, st = by("meal")[0], by("stomach")[0]
+        state, m = st.data["state"], meal.data["time"]
+        a, b = STOMACH[state]
+        lines.append(f"{eid[id(meal)]}: the last meal was at {fmt(m)}. {eid[id(st)]}: the stomach contents were {state}.")
+        if state == "empty":
+            lines.append(f"Empty means 4 hours or more after the meal. " + _plus(m, a) + f" So death came at {fmt(m + a)} or later.")
+        else:
+            lines.append(f"{state.capitalize()} means {a // 60} to {b // 60} hour{'s' if b > 60 else ''} after the meal. "
+                         + (_plus(m, a) + " " if a else f"From {fmt(m)}. ") + _plus(m, b)
+                         + f" So death came between {fmt(m + a)} and {fmt(m + b)}.")
+        lines.append(f"Combining both, the later start and the earlier end: the death window is {fmt(lo)} to {fmt(hi)}.")
+    else:
+        lines.append(f"So the death window is {fmt(lo)} to {fmt(hi)}.")
+    lines.append(_midnight_note(lo, hi))
+    for f in by("homicide"):
+        lines.append(f"{eid[id(f)]} rules out an accident ({label_of['accident']}).")
+
+    lines.append("\nStep 2 - Was the body moved, and does access matter?")
+    remaining = sorted(((s, n) for n, s in label_of.items() if n != "accident"), key=lambda x: int(x[0][1:]))
+    lines.append(_still(remaining, "Suspects"))
+    liv = by("lividity")
+    moved = bool(liv and liv[0].data["moved"])
+    if moved:
+        lines.append(f"{eid[id(liv[0])]}: lividity does not match how the body lay, so the body was moved after death. "
+                     "The death happened somewhere else, so the room's key list does not limit the suspects.")
+    else:
+        if liv:
+            lines.append(f"{eid[id(liv[0])]}: lividity matches how the body lay, so the death happened where it was found.")
+        kh = by("keyholders")[0]
+        holders = set(kh.data["names"])
+        lines.append(f"{eid[id(by('no_forced_entry')[0])]}: no forced entry, so the killer used a key. {eid[id(kh)]} lists the key holders.")
+        for name, sid in label_of.items():
+            if name != "accident" and name not in holders:
+                lines.append(f"{name} ({sid}) has no key and is ruled out.")
+        remaining = [(s, n) for s, n in remaining if n in holders]
+    lines.append(_still(remaining))
+
+    lines.append(f"\nStep 3 - Alibis against the window {fmt(lo)} to {fmt(hi)}.")
+    names = {n for _, n in remaining}
+    cleared = set()
+    for f in facts:
+        if f.kind == "alibi" and f.data["name"] in names:
+            d = f.data
+            lines.append(f"{eid[id(f)]}: {d['name']} is verified from {fmt(d['start'])} to {fmt(d['end'])}.")
+            lines += explain_coverage(d["start"], d["end"], lo, hi, who=f"{d['name']}'s alibi")
+            if d["start"] <= lo and d["end"] >= hi:
+                cleared.add(d["name"])
+                lines.append(f"So {d['name']} ({label_of[d['name']]}) is ruled out.")
+            else:
+                lines.append(f"So this alibi does not clear {d['name']}.")
+        elif f.kind == "testimony" and f.data["name"] in names:
+            lines.append(f"{eid[id(f)]}: {f.data['name']}'s own account, unverified, so it does not clear them.")
+    remaining = [(s, n) for s, n in remaining if n not in cleared]
+    lines.append(_still(remaining))
+    lines.append("\nStep 4 - Red herrings: " + ", ".join(raw["answer_key"]["red_herrings"])
+                 + " (motives of people already excluded, or noise with an innocent explanation).")
+    answer = agent_solver(case, "", raw)
+    culprit = remaining[0][1]
+    lines.append(f"\nConclusion: only {answer['most_likely']} {culprit} is left, so {culprit} ({answer['most_likely']}) is the culprit.")
+    lines.append(_answer_block(answer))
+    return "\n".join(lines)
+
+
 def write_multi_liar_trace(raw: dict) -> str:
     """Trace for the k-liar family: read how many lie, check every statement, count the liars."""
     g = raw["generator"]
@@ -581,6 +675,8 @@ def write_trace(raw: dict) -> str:
         return write_multi_liar_trace(raw)
     if raw["generator"].get("family") == "travel":
         return write_travel_trace(raw)
+    if raw["generator"].get("family") == "physical":
+        return write_physical_trace(raw)
     case = CaseDefinition.from_dict(raw)
     facts, eid = _fact_ids(raw)
     label_of = {}

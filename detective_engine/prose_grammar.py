@@ -332,6 +332,50 @@ def journey_claim(r, s, st, t):
     ])
 
 
+def physical_rule(r):
+    return r.choice([
+        "Medical rules for this case: food stays undigested for about an hour after a meal, is partly digested from one "
+        "to three hours after it, and has left the stomach after four hours. Lividity settles where the body lies; "
+        "lividity that does not match how the body lay means it was moved after death, so the death happened somewhere else.",
+        "Use these forensic rules: food is undigested for roughly an hour after eating, partly digested from one to three "
+        "hours, and gone from the stomach after four hours. Lividity forms wherever the body rests, so lividity that "
+        "does not match the position found means the body was moved and the death happened elsewhere.",
+    ])
+
+
+def meal(r, v, where, t):
+    return r.choice([
+        f"{v} ate dinner at {where} at {t}; the others there remember.",
+        f"Witnesses saw {v} eating a full meal at {where} at {t}.",
+        f"{v}'s last meal was at {where}, eaten at {t}.",
+        f"At {where}, {v} sat down to eat at {t}, according to the staff.",
+    ])
+
+
+def stomach(r, state):
+    return r.choice([
+        f"The post-mortem found the stomach contents {state}.",
+        f"According to the pathologist, the stomach contents were {state}.",
+        f"The stomach contents, examined at the post-mortem, were {state}.",
+    ])
+
+
+def lividity_moved(r):
+    return r.choice([
+        "Lividity is on the victim's back, but the body was found lying face down.",
+        "The lividity is along the back, while the body was found face down on the floor.",
+        "Lividity marks the victim's back, which does not match the face-down position the body was found in.",
+    ])
+
+
+def lividity_still(r):
+    return r.choice([
+        "Lividity is on the victim's back, matching how the body lay.",
+        "The lividity along the back matches the position the body was found in.",
+        "Lividity marks the back, consistent with the body lying face up where it was found.",
+    ])
+
+
 FILLERS = ["It had been raining since the afternoon.", "The street was quiet that night.",
            "Detectives checked this twice.", "This was confirmed the next morning.",
            "The information came in late on the first day."]
@@ -352,7 +396,8 @@ GRAMMAR: dict[str, Callable] = {
     "record": record, "claim": claim, "sighting": sighting, "demeanour": demeanour,
     "rule_liar": rule_liar, "rule_combo": rule_combo,
     "travel_rule": travel_rule, "ticket": ticket, "timetable": timetable, "travel": travel,
-    "journey_claim": journey_claim,
+    "journey_claim": journey_claim, "physical_rule": physical_rule, "meal": meal, "stomach": stomach,
+    "lividity_moved": lividity_moved, "lividity_still": lividity_still,
 }
 
 

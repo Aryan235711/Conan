@@ -164,6 +164,22 @@ def agent_solver(case, prompt, raw):
         return {"most_likely": top, "probabilities": {f"S{i}": float(f"S{i}" == top) for i in range(1, len(labels) + 1)},
                 "ruled_out": [f"S{i}" for i in range(1, len(labels) + 1) if f"S{i}" != top],
                 "key_evidence": key, "red_herrings": herr, "time_window": {"earliest": fmt(lo), "latest": fmt(hi)}}
+    if raw["generator"].get("family") == "physical":
+        from . import physical
+        labels = ["accident" if s.endswith("was an accident.") else _scenario_person(s) for s in case.scenarios]
+        suspects = [l for l in labels if l != "accident"]
+        sol = physical.solve(facts, suspects, True)
+        top_label = next(iter(sol))
+        top = f"S{labels.index(top_label) + 1}"
+        key = [f"E{i}" for i, f in enumerate(facts, 1)
+               if f.kind != "physical_rule" and physical.solve([g for g in facts if g is not f], suspects, True) != sol]
+        herr = [f"E{i}" for i, f in enumerate(facts, 1) if f.kind == "salient"
+                or (f.kind == "motive" and f.data.get("name") != top_label)]
+        lo, hi = physical.window(facts)
+        n = len(labels)
+        return {"most_likely": top, "probabilities": {f"S{i}": float(f"S{i}" == top) for i in range(1, n + 1)},
+                "ruled_out": [f"S{i}" for i in range(1, n + 1) if f"S{i}" != top],
+                "key_evidence": key, "red_herrings": herr, "time_window": {"earliest": fmt(lo), "latest": fmt(hi)}}
     if raw["generator"].get("family") == "travel":
         from . import travel
         labels = ["accident" if s.endswith("was an accident.") else _scenario_person(s) for s in case.scenarios]

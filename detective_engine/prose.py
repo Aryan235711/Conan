@@ -35,7 +35,7 @@ import random
 from pathlib import Path
 from typing import Any
 
-from . import composite, liar, mixed, travel
+from . import composite, liar, mixed, physical, travel
 from . import generator as timeline
 from . import prose_grammar as G
 from .generator import POOLS, death_window, fmt
@@ -253,6 +253,37 @@ BANK: dict[str, dict[str, list[str]]] = {
         "train": ["{s} says they took the {t} train from {st}, but no ticket or record shows it.",
                   "{s} claims to have caught the {t} from {st}; nothing confirms it."],
         "test": ["By {s}'s own story the {t} out of {st} was the train taken, yet there is no ticket."],
+    },
+    "physical_rule": {
+        "train": ["Medical rules for this case: food stays undigested for about an hour after a meal, is partly digested "
+                  "from one to three hours after it, and has left the stomach after four hours. Lividity settles where the "
+                  "body lies; lividity that does not match how the body lay means it was moved after death, so the death "
+                  "happened somewhere else."],
+        "test": ["The pathologist's guide: within an hour of eating, food is still undigested; between one and three hours "
+                 "it is partly digested; after four hours the stomach is empty. If the pooled blood (lividity) is on a side "
+                 "the body was not lying on, someone moved the body after death and the person died elsewhere."],
+    },
+    "meal": {
+        "train": ["{v} ate dinner at {where} at {t}; the others there remember.",
+                  "{v} had a meal at {where} at {t}, as two witnesses confirm.",
+                  "At {t}, {v} was eating at {where}; staff remember the table."],
+        "test": ["Receipts show {v} finished eating at {where} at {t}."],
+    },
+    "stomach": {
+        "train": ["The post-mortem found the stomach contents {state}.",
+                  "At the post-mortem the stomach contents were {state}.",
+                  "The pathologist reports the stomach contents as {state}."],
+        "test": ["Examined later, the food in the stomach turned out to be {state}."],
+    },
+    "lividity_moved": {
+        "train": ["Lividity is on the victim's back, but the body was found lying face down.",
+                  "The pathologist found lividity along the back, yet the body lay face down when found."],
+        "test": ["Blood had pooled in the victim's back although the body was discovered on its front."],
+    },
+    "lividity_still": {
+        "train": ["Lividity is on the victim's back, matching how the body lay.",
+                  "The lividity along the victim's back matches the position the body was found in."],
+        "test": ["Blood had pooled in the victim's back, the side the body rested on when found."],
     },
     "rule_combo": {
         "train": ["Records are reliable. Exactly one witness below is lying; the others tell the truth.",
@@ -616,11 +647,42 @@ def travel_source(world: dict, W: Writer) -> dict:
             "hidden_truth": f"{world['culprit']} killed {world['victim']}."}
 
 
+def physical_source(world: dict, W: Writer) -> dict:
+    from .physical import MEALS
+    rng, room, pool = W.rng, world["place"], POOLS[world["pool"]]
+    head = [_para(W.say("physical_rule"), [])] + _physical(world, W)
+    rest = _access(world, W)
+    for f in world["facts"]:
+        d = f.data
+        if f.kind == "meal":
+            rest.append(_para(W.say("meal", v=world["victim"], where=rng.choice(MEALS[world["pool"]]), t=fmt(d["time"])),
+                              [_fact("meal", time=d["time"])]))
+        elif f.kind == "stomach":
+            rest.append(_para(W.say("stomach", state=d["state"]), [_fact("stomach", state=d["state"])]))
+        elif f.kind == "lividity":
+            rest.append(_para(W.say("lividity_moved" if d["moved"] else "lividity_still"), [_fact("lividity", moved=d["moved"])]))
+        elif f.kind == "alibi":
+            rest.append(_para(W.say("alibi", s=d["name"], p=rng.choice(pool["alibi_place"]),
+                                    a=fmt(d["start"]), b=fmt(d["end"])),
+                              [_fact("alibi", name=d["name"], start=d["start"], end=d["end"])]))
+        elif f.kind == "testimony":
+            rest.append(_para(W.say("testimony", s=d["name"], w="home"), [_fact("testimony", name=d["name"])]))
+    rest += _motives(world, W) + _salient(world, W)
+    scen = [{"text": f"{s}, the {world['roles'][s]}, killed {world['victim']}.", "label": s} for s in world["suspects"]]
+    scen.append({"text": f"{world['victim']}'s death was an accident.", "label": "accident"})
+    return {"family": "physical", "evidence": [head[0]] + _order(rng, head[1:], rest), "scenarios": scen,
+            "intended": world["culprit"], "title": f"What the body showed in the {room}",
+            "summary": (f"{world['victim']} was found dead in the {room}. {len(world['suspects'])} people are under "
+                        "suspicion. The post-mortem matters. Work out who could have done it and when."),
+            "hidden_truth": f"{world['culprit']} killed {world['victim']}."}
+
+
 FAMILIES = {
     "timeline": (timeline.simulate, timeline_source),
     "composite": (composite.simulate, composite_source),
     "mixed": (mixed.simulate, composite_source),
     "travel": (travel.simulate, travel_source),
+    "physical": (physical.simulate, physical_source),
     "liar": (liar.simulate, liar_source),
 }
 
@@ -718,6 +780,9 @@ SPLITS = {
     # v11 family 3 in prose.
     "prose_travel_train": [("travel", 800, 97, (2, 3), "A", "wide3", "PJR")],
     "prose_travel_test": [("travel", 100, 98, (2, 3), "B", "test", "PJT")],
+    # v11 family 4 in prose.
+    "prose_physical_train": [("physical", 800, 113, (2, 3), "A", "wide3", "PFR")],
+    "prose_physical_test": [("physical", 100, 114, (2, 3), "B", "test", "PFT")],
     "prose_test": [("timeline", 50, 24, (2, 3), "B", "test", "PXT"),
                    ("liar", 50, 25, (2, 3), "B", "test", "PXL"),
                    ("composite", 50, 26, (2, 3), "B", "test", "PXC")],
