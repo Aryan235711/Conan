@@ -919,6 +919,41 @@ family transfers to a hand-written case of the same kind: the timetable case in
 tier B, unsolved by every earlier model, is now right; another tier-B case that
 the one-stage model had solved is not, so the total stays at 6 of 12.
 
+### v11 family 4 on the 1.5B: physical evidence (v14)
+
+The fourth new reasoning type puts forensic rules inside the case
+(`detective_engine/physical.py`). Stomach contents date the death from the last
+meal (undigested: within an hour; partly digested: one to three hours; empty:
+four or more) and narrow the cooling window, so in every stomach case some
+alibi clears its holder only once the stomach is used. Lividity that does not
+match how the body lay means it was moved after death, so the room's key list no
+longer limits the suspects and a suspect without a key can be the culprit. (A
+dry patch under a car was left out: no clean checkable rule in this format yet.)
+
+v14 continued v13 on 2,200 rows (1,100 physical evidence, 900 replay, 200 travel),
+275 steps at lr 7e-5, with a paired baseline first.
+
+| Held-out (same cases) | v13 | v14 |
+|---|---|---|
+| Physical evidence, templated, 100 | 37% | **99%** |
+| Physical evidence, unseen prose, 100 | 44% | **67%** |
+| Travel alibis, templated / prose | 98 / 94% | 98 / 90% |
+| prose_test2, 150 | 89% | 89% |
+| Mixed alibis in prose | 89% | 93% |
+| Mixed / combined / timeline | 99 / 100 / 100% | 98 / 99 / 97% |
+| Lying witness / k liars | 99 / 99% | 98 / 97% |
+| Lookup probe | 96% | **99%** |
+| Spot check S-1 | right | **right** |
+| Reliability suite | 6/12 | 6/12 (lividity and timetable cases solved; one tier-A case lost) |
+
+The skill is learned in the trained format, and the hand-written lividity case
+is solved. Unseen prose lags: cases where the body was moved score 20 of 40
+(others 47 of 60), and 14 of the 33 failures build a wrong death window. The
+held-out wording for these clues ("blood had pooled in the victim's back
+although the body was discovered on its front") is further from the training
+phrasing than for earlier families, which had verified LLM paraphrases. The
+stomach-contents hand-written case is still unsolved.
+
 ## 6. Training pipeline
 
 - **SFT warm-up.** Reasoning traces are written from the solver's facts in a

@@ -121,6 +121,12 @@ hand-written spot check flips to a misread window. A short consolidation run
 to 99-100%, solves the spot check again, and is the first model to solve the
 hand-written timetable case.
 
+**Physical evidence (v14).** A fourth new type puts forensic rules in the case:
+stomach contents narrow the death window, and lividity that does not match the
+body's position means it was moved, so the room's keys stop mattering. v14
+learns it (37% to **99%**; 67% in unseen prose), keeps the other families, reaches
+99% on the lookup probe, solves the spot check and the hand-written lividity case.
+
 The path to 83.5% came from diagnosis rather than more training:
 
 1. A step-by-step error analysis showed models ruled out the real culprit
