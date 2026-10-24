@@ -116,8 +116,10 @@ types no generator teaches yet.
 journeys: timetable lookup among decoys, time arithmetic across midnight, then
 coverage. Continuing the 1.5B on Kaggle takes it from 32% to **97%** (91% in unseen
 prose). Older splits slip by a few cases each (none significant) and the
-hand-written spot check flips to a misread window, so a consolidation run comes
-next.
+hand-written spot check flips to a misread window. A short consolidation run
+(**v13**) keeps travel at 98% (94% in unseen prose), brings every templated family
+to 99-100%, solves the spot check again, and is the first model to solve the
+hand-written timetable case.
 
 The path to 83.5% came from diagnosis rather than more training:
 

@@ -895,6 +895,30 @@ before adding another family. Tier B still gets little from the new families, so
 the hand-written cases they target are not yet solved by the generated versions
 of the same reasoning.
 
+### v13: consolidation on the 1.5B
+
+v13 continued the v12 adapter for 175 steps at half the learning rate on 1,400
+rows: 1,100 fresh replay rows from the consolidated set and 300 travel traces.
+
+| Held-out (same cases) | 1.5B one-stage | v12 | v13 |
+|---|---|---|---|
+| Travel alibis, templated, 100 | 32% | 97% | **98% (93-99)** |
+| Travel alibis, unseen prose, 100 | 25% | 91% | **94% (88-97)** |
+| prose_test2, 150 | **93%** | 89% | 89% |
+| Mixed alibis in prose, 100 | **93%** | 90% | 89% |
+| Mixed / combined / timeline, 100 each | 97 / 99 / 99% | 99 / 99 / 99% | **99 / 100 / 100%** |
+| Lying witness / k liars, 100 each | 100 / 99% | 97 / 98% | 99 / 99% |
+| Lookup probe | 98% | 95% | 96% |
+| Spot check S-1 | right | wrong | **right** |
+| Reliability suite | 6/12 (B 2/6) | 6/12 (B 1/6) | 6/12 (A 5/6, B 1/6, **R-B3 timetable solved**) |
+
+v13 keeps the new skill, brings the templated families back to 99-100% and
+solves S-1 again. On unseen prose it stays a few cases under the one-stage model
+(paired 7 vs 12 and 3 vs 7, neither significant). For the first time a generated
+family transfers to a hand-written case of the same kind: the timetable case in
+tier B, unsolved by every earlier model, is now right; another tier-B case that
+the one-stage model had solved is not, so the total stays at 6 of 12.
+
 ## 6. Training pipeline
 
 - **SFT warm-up.** Reasoning traces are written from the solver's facts in a
