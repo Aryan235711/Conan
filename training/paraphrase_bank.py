@@ -120,6 +120,62 @@ KINDS: dict[str, dict] = {
         "seeds": ["The fatal injury is a blow to the back of the head that no fall in the room could explain."],
         "type": "J",
     },
+    # v11 families 3 and 4 (travel and physical evidence), added for bank v3.
+    "ticket": {
+        "fields": {"PERSON": "s", "STATION": "st", "TIME": "t"},
+        "meaning": "A reliable ticket scan shows [PERSON] was on the train that left [STATION] station at [TIME].",
+        "seeds": ["[PERSON]'s ticket was scanned on the [TIME] train from [STATION].",
+                  "The ticket barrier at [STATION] logged [PERSON] boarding the [TIME] train."],
+        "type": "L",
+    },
+    "timetable": {
+        "fields": {"STATION": "st", "TIME": "t", "DEST": "d", "ARR": "a"},
+        "meaning": "The timetable says the train that leaves [STATION] at [TIME] arrives at [DEST] at [ARR].",
+        "seeds": ["The [TIME] train from [STATION] arrives at [DEST] at [ARR].",
+                  "According to the timetable, the [TIME] from [STATION] reaches [DEST] at [ARR]."],
+        "type": "M",
+    },
+    "travel": {
+        "fields": {"STATION": "st", "MINUTES": "m", "ROOM": "room"},
+        "meaning": "The fastest possible trip between [STATION] station and the [ROOM] takes [MINUTES] minutes.",
+        "seeds": ["[STATION] station is [MINUTES] minutes from the [ROOM].",
+                  "The fastest route between [STATION] station and the [ROOM] takes [MINUTES] minutes."],
+        "type": "N",
+    },
+    "journey_claim": {
+        "fields": {"PERSON": "s", "STATION": "st", "TIME": "t"},
+        "meaning": "[PERSON] says they took the [TIME] train from [STATION], but there is no ticket or record of it. "
+                   "It is only [PERSON]'s word.",
+        "seeds": ["[PERSON] says they took the [TIME] train from [STATION], but no ticket or record shows it."],
+        "type": "O",
+    },
+    "meal": {
+        "fields": {"VICTIM": "v", "PLACE": "where", "TIME": "t"},
+        "meaning": "[VICTIM] ate a meal at [PLACE] at [TIME]; people there confirm it.",
+        "seeds": ["[VICTIM] ate dinner at [PLACE] at [TIME]; the others there remember.",
+                  "At [TIME], [VICTIM] was eating at [PLACE]; staff remember the table."],
+        "type": "P",
+    },
+    "stomach": {
+        "fields": {"STATE": "state"},
+        "meaning": "At the post-mortem the victim's stomach contents were found to be [STATE].",
+        "seeds": ["The post-mortem found the stomach contents [STATE].",
+                  "The pathologist reports the stomach contents as [STATE]."],
+        "type": "Q",
+    },
+    "lividity_moved": {
+        "fields": {},
+        "meaning": "Lividity (pooled blood) is on the victim's back, but the body was found lying face down, so the "
+                   "lividity does not match how the body lay.",
+        "seeds": ["Lividity is on the victim's back, but the body was found lying face down."],
+        "type": "R",
+    },
+    "lividity_still": {
+        "fields": {},
+        "meaning": "Lividity (pooled blood) is on the victim's back, which matches how the body lay when found.",
+        "seeds": ["Lividity is on the victim's back, matching how the body lay."],
+        "type": "S",
+    },
 }
 
 EXTRACT = """You read one sentence from a detective case file and say exactly what it states.
@@ -134,6 +190,14 @@ G = key holders: who holds keys. Fields: names (list).
 H = victim alive: the victim was alive at a time. Fields: time.
 I = no forced entry: the door was opened with a key. No fields.
 J = not an accident: the injury rules out an accident. No fields.
+L = ticket: a ticket or scan shows a person on a train leaving a station at a time. Fields: person, station, time.
+M = timetable: a train leaving one station at a time arrives at another station at a time. Fields: from, departs, to, arrives.
+N = travel time: how many minutes the trip between a station and a place takes. Fields: station, minutes.
+O = unverified journey: a person says they took a train, with no ticket or record. Fields: person.
+P = meal: the victim ate at a place at a time. Fields: time.
+Q = stomach contents: the state of the victim's stomach contents. Fields: state.
+R = lividity does not match how the body lay (the body was moved). No fields.
+S = lividity matches how the body lay (not moved). No fields.
 K = none of these.
 Copy names, places and times exactly as written. Times are HH:MM; a span has separate from and to times.
 The victim (the dead person) is {victim}. Record sources such as CCTV or card logs are never a person.
@@ -146,6 +210,14 @@ Examples:
 "Rosa Moreau says that at 19:00 they saw Elif Garcia at the café." -> {{"type": "F", "speaker": "Rosa Moreau", "seen": "Elif Garcia", "place": "the café", "time": "19:00"}}
 "Only Ava Jensen, Kavya Nakamura and Pedro Fischer have keys to the studio." -> {{"type": "G", "names": ["Ava Jensen", "Kavya Nakamura", "Pedro Fischer"]}}
 "{victim} paid for a sandwich at 18:45." -> {{"type": "H", "time": "18:45"}}
+"A barrier scan logged Ivan Costa on the 19:10 train from Riverside." -> {{"type": "L", "person": "Ivan Costa", "station": "Riverside", "time": "19:10"}}
+"The 19:10 from Riverside gets into Kingsferry at 20:05." -> {{"type": "M", "from": "Riverside", "departs": "19:10", "to": "Kingsferry", "arrives": "20:05"}}
+"Kingsferry station is a 25 minutes ride from the studio." -> {{"type": "N", "station": "Kingsferry", "minutes": "25"}}
+"Olga Petrov says she caught the 19:10 from Riverside; no ticket exists." -> {{"type": "O", "person": "Olga Petrov"}}
+"{victim} had lunch at the deli at 13:20, as the owner recalls." -> {{"type": "P", "time": "13:20"}}
+"The stomach was found empty at the post-mortem." -> {{"type": "Q", "state": "empty"}}
+"Pooled blood is on the left side, but the body lay on its right." -> {{"type": "R"}}
+"The pooled blood is on the side the body was resting on." -> {{"type": "S"}}
 "The office door was unlocked with a key; nothing was forced." -> {{"type": "I"}}
 "A blow to the head that no fall could cause killed the victim." -> {{"type": "J"}}
 Sentence: {sentence}
@@ -219,7 +291,19 @@ HEDGE = re.compile(r"\b(among others|including|others|also|such as|some of|sever
 
 # Meaning rules per kind, on top of the round trip: a claim must sound like a
 # claim and a record like a record.
+MISMATCH = re.compile(r"\b(but|although|though|yet|whereas|while|despite|not|does not|doesn't|inconsistent|"
+                      r"mismatch|contradicts|contrary)\b", re.I)
 SEMANTIC = {
+    "ticket": lambda s: re.search(r"\b(ticket|scan|scanned|barrier|gate|record|records|logged|log)\b", s, re.I) and not SPEECH.search(s),
+    "timetable": lambda s: not SPEECH.search(s),
+    # the stated time is the fastest possible: no hedges that make it a lower bound or an estimate
+    "travel": lambda s: "[MINUTES] minutes" in s and not re.search(
+        r"\b(at least|more than|over|about|around|roughly|approximately|or more|often|usually|up to|typically|nearly)\b", s, re.I),
+    "journey_claim": lambda s: SPEECH.search(s) and re.search(r"\b(no|without|nothing|never|lacks|absent)\b", s, re.I),
+    "meal": lambda s: True,
+    "stomach": lambda s: True,
+    "lividity_moved": lambda s: MISMATCH.search(s) and re.search(r"\b(back|face down|front|face-down)\b", s, re.I),
+    "lividity_still": lambda s: not MISMATCH.search(s),
     "alibi": lambda s: SOURCE.search(s) and not SPEECH.search(s),
     "record": lambda s: SOURCE.search(s) and not SPEECH.search(s),
     "point": lambda s: SOURCE.search(s) and not SPEECH.search(s),
@@ -258,7 +342,8 @@ def rule_ok(kind: str, s: str) -> str | None:
 
 SAMPLE = {"PERSON": "Leo Brandt", "WITNESS": "Maya Okafor", "SUSPECT": "Leo Brandt", "OTHER": "Rosa Iyer",
           "VICTIM": "Tara Hughes", "PLACE": "the bakery", "ROOM": "workshop", "START": "21:40", "END": "00:15",
-          "TIME": "22:35", "HOLDERS": "Tara Hughes, Leo Brandt and Rosa Iyer"}
+          "TIME": "22:35", "HOLDERS": "Tara Hughes, Leo Brandt and Rosa Iyer", "STATION": "Northgate",
+          "DEST": "Eastbay", "ARR": "23:55", "MINUTES": "35", "STATE": "partly digested"}
 
 
 def expected(kind: str) -> dict:
@@ -274,6 +359,13 @@ def expected(kind: str) -> dict:
         "G": {"names": ["Tara Hughes", "Leo Brandt", "Rosa Iyer"]},
         "H": {"time": s["TIME"]},
         "I": {}, "J": {},
+        "L": {"person": s["PERSON"], "station": s["STATION"], "time": s["TIME"]},
+        "M": {"from": s["STATION"], "departs": s["TIME"], "to": s["DEST"], "arrives": s["ARR"]},
+        "N": {"station": s["STATION"], "minutes": s["MINUTES"]},
+        "O": {"person": s["PERSON"]},
+        "P": {"time": s["TIME"]},
+        "Q": {"state": s["STATE"]},
+        "R": {}, "S": {},
     }[t]
 
 
