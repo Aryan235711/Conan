@@ -151,6 +151,44 @@ subprocess.check_call([sys.executable, "training/kaggle_run.py"])
 '''
 
 
+PARAPHRASE_RUNNER = '''
+import glob, json, os, shutil, subprocess, sys, time
+# Paraphrase generation on Kaggle's GPU: install ollama, pull the models, run training/paraphrase_bank.py.
+args = json.loads('__ARGS__')
+src = glob.glob("/kaggle/input/**/training/paraphrase_bank.py", recursive=True)[0]
+repo = os.path.dirname(os.path.dirname(src))
+shutil.copytree(repo, "/kaggle/working/Conan", dirs_exist_ok=True)
+os.chdir("/kaggle/working/Conan")
+subprocess.check_call("curl -fsSL https://ollama.com/install.sh | sh", shell=True)
+server = subprocess.Popen(["ollama", "serve"])
+time.sleep(10)
+for model in {"qwen2.5-coder:7b", *[a for a in args if a.startswith(("deepseek", "qwen"))]}:
+    subprocess.check_call(["ollama", "pull", model])
+for run in args["runs"]:
+    subprocess.check_call([sys.executable, "training/paraphrase_bank.py", "--out", args["out"], *run])
+server.terminate()
+print("PARAPHRASE_DONE")
+'''
+
+
+def paraphrase(out: str, runs: list[list[str]]) -> None:
+    """Run paraphrase generation on Kaggle (internet on, GPU), starting from the bank already at `out`."""
+    folder = WORK / "paraphrase"
+    shutil.rmtree(folder, ignore_errors=True)
+    folder.mkdir(parents=True)
+    models = sorted({r[r.index("--gen-model") + 1] for r in runs if "--gen-model" in r})
+    payload = {"out": out, "runs": runs}
+    payload.update({m: True for m in models})
+    (folder / "run.py").write_text(PARAPHRASE_RUNNER.replace("__ARGS__", json.dumps(payload)))
+    slug = os.environ.get("KAGGLE_NAME", "conan-paraphrase")
+    (folder / "kernel-metadata.json").write_text(json.dumps({
+        "id": f"{user()}/{slug}", "title": slug, "code_file": "run.py", "language": "python", "kernel_type": "script",
+        "is_private": True, "enable_gpu": True, "enable_internet": True, "dataset_sources": [f"{user()}/{DATASET_SLUG}"],
+        "kernel_sources": [], "competition_sources": [], "model_sources": []}, indent=1))
+    kaggle("kernels", "push", "-p", str(folder))
+    STATE.write_text(json.dumps({"session": 0, "kernel": f"{user()}/{slug}", "paraphrase_out": out}))
+
+
 def push(session: int, previous: str | None) -> None:
     folder = WORK / f"kernel{session}"
     shutil.rmtree(folder, ignore_errors=True)
@@ -180,12 +218,24 @@ def main() -> None:
         wheels()
     elif cmd == "private":
         private()
+    elif cmd == "paraphrase":
+        # usage: kaggle_push.py paraphrase OUT_PATH "ARGS FOR RUN 1" ["ARGS FOR RUN 2" ...]
+        paraphrase(sys.argv[2], [a.split() for a in sys.argv[3:]])
     elif cmd == "run":
         push(1, None)
     elif cmd == "resume":
         push(s["session"] + 1, s["kernel"])
     elif cmd == "status":
         kaggle("kernels", "status", s["kernel"])
+    elif cmd == "fetch" and "paraphrase_out" in s:
+        out = WORK / "paraphrase_output"
+        out.mkdir(parents=True, exist_ok=True)
+        name = Path(s["paraphrase_out"]).name
+        kaggle("kernels", "output", s["kernel"], "-p", str(out), "--file-pattern", f".*{name}$")
+        got = next(out.rglob(name), None)
+        if got:
+            shutil.copy2(got, ROOT / s["paraphrase_out"])
+            print(f"paraphrase bank updated: {s['paraphrase_out']}")
     elif cmd == "fetch":
         out = WORK / f"output{s['session']}"
         out.mkdir(parents=True, exist_ok=True)
