@@ -30,7 +30,8 @@ ROOT = Path(__file__).resolve().parent.parent
 WORK = ROOT / "data" / "kaggle" / "push"
 KAGGLE = str(Path(sys.executable).parent / "kaggle")
 DATASET_SLUG = "conan-kaggle"
-WHEELS_SLUG = "conan-wheels"          # Linux wheels of the exact library versions (data/kaggle/wheels)
+WHEELS_SLUG = "conan-wheels"
+PRIVATE_SLUG = "conan-private-eval"   # hand-written reliability and spot-check cases (private dataset)          # Linux wheels of the exact library versions (data/kaggle/wheels)
 ACCEL = os.environ.get("KAGGLE_ACCEL", "")        # empty: use enable_gpu from the metadata
 MODEL_HANDLE = "qwen-lm/qwen2.5/transformers/1.5b-instruct/1"
 STATE = WORK / "state.json"
@@ -69,6 +70,22 @@ def wheels() -> None:
         kaggle("datasets", "version", "-p", str(folder), "-m", "update")
     else:
         kaggle("datasets", "create", "-p", str(folder))
+
+
+def private() -> None:
+    """Upload the hand-written cases as their own private dataset, so they are evaluated on Kaggle too."""
+    folder = WORK / "private"
+    shutil.rmtree(folder, ignore_errors=True)
+    (folder / "eval").mkdir(parents=True)
+    for src in (ROOT / "benchmarks" / "reliability" / "cases.jsonl", ROOT / "data" / "generated" / "spotcheck.jsonl"):
+        shutil.copy2(src, folder / "eval" / src.name)
+    (folder / "dataset-metadata.json").write_text(json.dumps(
+        {"title": PRIVATE_SLUG, "id": f"{user()}/{PRIVATE_SLUG}", "licenses": [{"name": "other"}]}))
+    mine = subprocess.run([KAGGLE, "datasets", "list", "--mine"], capture_output=True, text=True).stdout
+    if f"{user()}/{PRIVATE_SLUG}" in mine:
+        kaggle("datasets", "version", "-p", str(folder), "-m", "update", "-r", "tar")
+    else:
+        kaggle("datasets", "create", "-p", str(folder), "-r", "tar")     # private by default
 
 
 def dataset() -> None:
@@ -113,6 +130,12 @@ if not torch.cuda.is_available():
     sys.exit("no GPU in this session (is the account phone-verified and the accelerator set?)")
 os.environ["MODEL"] = models[0]
 shutil.copytree(repo, "/kaggle/working/Conan", dirs_exist_ok=True)
+for name, dest in (("cases.jsonl", "benchmarks/reliability/cases.jsonl"), ("spotcheck.jsonl", "data/generated/spotcheck.jsonl")):
+    hits = glob.glob(f"/kaggle/input/**/eval/{name}", recursive=True)    # private hand-written cases, if attached
+    if hits:
+        os.makedirs(os.path.dirname("/kaggle/working/Conan/" + dest), exist_ok=True)
+        shutil.copy2(hits[0], "/kaggle/working/Conan/" + dest)
+        print("hand-written cases attached:", name, flush=True)
 os.chdir("/kaggle/working/Conan")
 if os.environ.get("SKIP_SMOKE") != "1" and not os.path.exists("runs/sft/" + os.environ.get("NAME", "qwen1.5b-all")):
     smoke = subprocess.call([sys.executable, "training/kaggle_run.py"],
@@ -137,7 +160,8 @@ def push(session: int, previous: str | None) -> None:
     (folder / "run.py").write_text(RUNNER.replace("__RUN_ENV__", json.dumps(env)))
     meta = {"id": f"{user()}/{slug}", "title": slug, "code_file": "run.py", "language": "python",
             "kernel_type": "script", "is_private": True, "enable_gpu": True, "enable_internet": True,
-            "dataset_sources": [f"{user()}/{DATASET_SLUG}", f"{user()}/{WHEELS_SLUG}"],
+            "dataset_sources": [f"{user()}/{DATASET_SLUG}", f"{user()}/{WHEELS_SLUG}"]
+                               + ([f"{user()}/{PRIVATE_SLUG}"] if os.environ.get("WITH_PRIVATE") == "1" else []),
             "kernel_sources": [previous] if previous else [], "competition_sources": [],
             "model_sources": [MODEL_HANDLE],
             "docker_image": "gcr.io/kaggle-gpu-images/python"}     # ask for the GPU image explicitly
@@ -154,6 +178,8 @@ def main() -> None:
         dataset()
     elif cmd == "wheels":
         wheels()
+    elif cmd == "private":
+        private()
     elif cmd == "run":
         push(1, None)
     elif cmd == "resume":
