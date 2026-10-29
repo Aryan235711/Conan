@@ -131,7 +131,7 @@ if not torch.cuda.is_available():
 os.environ["MODEL"] = models[0]
 shutil.copytree(repo, "/kaggle/working/Conan", dirs_exist_ok=True)
 for name, dest in (("cases.jsonl", "benchmarks/reliability/cases.jsonl"), ("spotcheck.jsonl", "data/generated/spotcheck.jsonl")):
-    hits = glob.glob(f"/kaggle/input/**/eval/{name}", recursive=True)    # private hand-written cases, if attached
+    hits = glob.glob(f"/kaggle/input/**/{name}", recursive=True)    # private hand-written cases, if attached
     if hits:
         os.makedirs(os.path.dirname("/kaggle/working/Conan/" + dest), exist_ok=True)
         shutil.copy2(hits[0], "/kaggle/working/Conan/" + dest)
@@ -159,6 +159,7 @@ src = glob.glob("/kaggle/input/**/training/paraphrase_bank.py", recursive=True)[
 repo = os.path.dirname(os.path.dirname(src))
 shutil.copytree(repo, "/kaggle/working/Conan", dirs_exist_ok=True)
 os.chdir("/kaggle/working/Conan")
+subprocess.check_call("apt-get install -y -q zstd 2>/dev/null || true", shell=True)
 subprocess.check_call("curl -fsSL https://ollama.com/install.sh | sh", shell=True)
 server = subprocess.Popen(["ollama", "serve"])
 time.sleep(10)

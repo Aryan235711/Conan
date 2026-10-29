@@ -36,6 +36,7 @@ brackets.
 | Qwen2.5 0.5B, SFT v9.2 (timeline, 100 cases) | 91% (84-95) | 87% | | 4% |
 | Qwen2.5 0.5B, SFT v9.4 (timeline, 100 cases) | 94% (88-97) | | | 1% |
 | **Qwen2.5 1.5B, v15** | **100% timeline / 99% physical / 98% travel,liar,combo / 96% mliar / 95% prose_mixed / 93% prose_test2 / 92% prose_travel / 75% prose_physical** | | | |
+| Qwen2.5 1.5B, v16 | 99% travel / 99% physical / 99% combo / 98% mliar / 97% test_ood / 96% prose_travel / 94% prose_mixed / 91% prose_test2 / 71% prose_physical (regressed) | | | |
 | Qwen2.5 Coder 7B, untrained (20 cases) | 5% (1-24) | 0% | 0.16 | |
 
 On the combined family, where the model must catch a lying witness before
@@ -132,11 +133,19 @@ learns it (37% to **99%**; 67% in unseen prose), keeps the other families, reach
 families (bank v3 `wide4`). Physical templated stays at 99%; prose physical
 rises to **75% (66-82)** (v14: 67%). All other splits hold or improve: travel
 98%/92%, prose_test2 93%, mixed 94%, prose_mixed 95%, combo 98%, liar 98%,
-mliar 96%, test_ood 100%. Error analysis: 23 of 25 wrong prose physical answers
-involve lividity — the model reads the lividity clue as a time-of-death estimate
-instead of a body-moved indicator, then incorrectly narrows the window. v16 will
-target this with traces that make the lividity_moved → keys_irrelevant chain
-explicit in every moved-body case.
+mliar 96%, test_ood 100%. Reliability 67% (12 cases), spotcheck 100%.
+Error analysis: 23 of 25 wrong prose physical answers involve lividity — the
+model reads the lividity clue as a time-of-death estimate instead of a
+body-moved indicator, then incorrectly narrows the window.
+
+**v16** attempted to fix this by oversampling moved-body cases (400 moved :
+200 not-moved, 2:1 ratio, 250 steps from v15). Result: prose_physical
+**71% (61-79)** — regressed by 4 points. Reliability dropped to 50%. Root
+cause: the model pattern-matches the Step 2 structure without reading the
+lividity sentence — it skips the lividity fact entirely and never fires the
+body-moved → keys-irrelevant chain. Oversampling alone is not enough. v17
+will add an explicit chain sentence in every moved-body trace that names the
+exact evidence paragraph and states the implication directly.
 
 The path to 83.5% came from diagnosis rather than more training:
 
