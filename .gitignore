@@ -122,3 +122,4 @@ data/spotcheck/
 data/kaggle/
 
 .venv-kaggle/
+Conan/
